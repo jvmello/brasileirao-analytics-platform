@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -13,6 +13,7 @@ class AppConfig:
     aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY", "password123")
     aws_region: str = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
     s3_endpoint_url: str = os.getenv("S3_ENDPOINT_URL", "http://localhost:9000")
+    silver_prefix: str = field(default_factory=lambda: os.getenv("SILVER_PREFIX", "silver"))
 
 
 DEFAULT_SOURCE_FILES = {

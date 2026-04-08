@@ -1,2 +1,6 @@
 roadmap.md
 data/*
+*__pycache__/*
+run_jupyter.txt
+.env
+*.pyc
