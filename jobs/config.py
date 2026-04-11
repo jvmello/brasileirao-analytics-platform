@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from dotenv import load_dotenv
 
 
 @dataclass(frozen=True)
 class AppConfig:
+    load_dotenv()
+
     bucket_name: str = os.getenv("BRASILEIRAO_BUCKET", "brasileirao")
     bronze_raw_prefix: str = os.getenv("BRONZE_RAW_PREFIX", "bronze/raw")
     bronze_metadata_prefix: str = os.getenv("BRONZE_METADATA_PREFIX", "bronze/metadata")

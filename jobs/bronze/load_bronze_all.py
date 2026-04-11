@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from jobs.bronze_loader import load_raw_file
+from jobs.bronze.bronze_loader import load_raw_file
 from jobs.config import AppConfig, DEFAULT_SOURCE_FILES
 
 

@@ -19,12 +19,20 @@ def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
     spark = (
         SparkSession.builder
         .appName(app_name)
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.endpoint", config.s3_endpoint_url)
+        .config("spark.hadoop.fs.s3a.endpoint.region", config.aws_region)
         .config("spark.hadoop.fs.s3a.access.key", config.aws_access_key_id)
         .config("spark.hadoop.fs.s3a.secret.key", config.aws_secret_access_key)
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
-        .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider")
+        .config(
+            "spark.hadoop.fs.s3a.aws.credentials.provider",
+            "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
+        )
+        .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000")
+        .config("spark.hadoop.fs.s3a.connection.timeout", "60000")
+        .config("spark.hadoop.fs.s3a.connection.request.timeout", "60000")
         .getOrCreate()
     )
 
