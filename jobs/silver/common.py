@@ -5,9 +5,22 @@ import os
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.types import DoubleType, IntegerType, LongType, StringType
 
 from jobs.config import AppConfig
+
+def filter_latest_load(df: DataFrame, explicit_load_date: str | None) -> DataFrame:
+    if explicit_load_date:
+        filtered = df.filter(F.col("_load_date") == explicit_load_date)
+        if filtered.limit(1).count() == 0:
+            raise ValueError(f"No bronze files found for load_date={explicit_load_date}")
+        return filtered
+
+    latest_load_date = df.select(F.max("_load_date").alias("latest_load_date")).collect()[0]["latest_load_date"]
+
+    if not latest_load_date:
+        raise ValueError("Could not determine latest load_date from bronze matches files.")
+
+    return df.filter(F.col("_load_date") == latest_load_date)
 
 def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
     """

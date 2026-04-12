@@ -9,9 +9,22 @@ from pyspark.sql.types import DoubleType, IntegerType, LongType, StringType
 
 from jobs.config import AppConfig
 
-from jobs.silver.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
+from jobs.silver.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer
 
-from jobs.silver.validations import validate_silver_matches, raise_if_critical_failures, write_invalid_records
+
+def filter_latest_load(df: DataFrame, explicit_load_date: str | None) -> DataFrame:
+    if explicit_load_date:
+        filtered = df.filter(F.col("_load_date") == explicit_load_date)
+        if filtered.limit(1).count() == 0:
+            raise ValueError(f"No bronze matches found for load_date={explicit_load_date}")
+        return filtered
+
+    latest_load_date = df.select(F.max("_load_date").alias("latest_load_date")).collect()[0]["latest_load_date"]
+
+    if not latest_load_date:
+        raise ValueError("Could not determine latest load_date from bronze matches files.")
+
+    return df.filter(F.col("_load_date") == latest_load_date)
 
 
 def transform_matches(df: DataFrame) -> DataFrame:
@@ -167,13 +180,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     config = AppConfig()
-    spark = build_spark_session("silver-matches", config)
+    spark = build_spark_session("silver-match-statistics", config)
 
     try:
-        bronze_matches = read_bronze_layer(spark=spark, config=config, source="matches")
+        bronze_matches = read_bronze_layer(spark=spark, config=config, source="match_statistics")
 
         if bronze_matches.limit(1).count() == 0:
-            raise ValueError("No bronze matches files found.")
+            raise ValueError("No bronze match statistics files found.")
 
         latest_or_selected = filter_latest_load(bronze_matches, args.load_date)
         silver_matches = transform_matches(latest_or_selected)
@@ -184,18 +197,9 @@ def main() -> None:
         row_count = silver_matches.count()
         season_count = silver_matches.select("season").distinct().count()
 
-        print(f"silver.matches successfully written.")
+        print(f"silver.match_statistics successfully written.")
         print(f"rows={row_count}")
         print(f"distinct_seasons={season_count}")
-
-        report = validate_silver_matches(silver_matches)
-        raise_if_critical_failures(report)
-
-        for check in report["checks"]:
-            print(
-                f"[{check['severity'].upper()}] "
-                f"{check['check_name']} -> invalid_count={check['invalid_count']}"
-            )
 
     finally:
         spark.stop()
