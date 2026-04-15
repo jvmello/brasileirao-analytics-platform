@@ -5,6 +5,24 @@ import os
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql.column import Column
+
+
+def parse_match_minute(column_name: str) -> tuple[Column, Column, Column, Column]:
+    minute_raw = F.trim(F.col(column_name).cast("string"))
+
+    minute_base_str = F.regexp_extract(minute_raw, r"^(\d+)", 1)
+    stoppage_str = F.regexp_extract(minute_raw, r"^\d+\+(\d+)$", 1)
+
+    minute_base = F.when(minute_base_str == "", F.lit(None)).otherwise(minute_base_str.cast("int"))
+    stoppage_minute = F.when(stoppage_str == "", F.lit(0)).otherwise(stoppage_str.cast("int"))
+
+    minute_exact = F.when(
+        minute_base.isNull(),
+        F.lit(None)
+    ).otherwise(minute_base + stoppage_minute)
+
+    return minute_raw, minute_base, stoppage_minute, minute_exact
 
 from jobs.config import AppConfig
 

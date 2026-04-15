@@ -8,8 +8,10 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, IntegerType, LongType, StringType
 
+from pyspark.sql.window import Window
+
 from jobs.config import AppConfig
-from jobs.silver.common import build_spark_session, normalize_string, get_silver_prefix, read_bronze_layer, filter_latest_load
+from jobs.silver.common import build_spark_session, normalize_string, get_silver_prefix, read_bronze_layer, filter_latest_load, parse_match_minute
 
 
 def normalize_name(value: str) -> str:
@@ -44,7 +46,7 @@ def parse_numeric(column_name: str) -> F.Column:
 def minute_bucket_expr(column_name: str) -> F.Column:
     col = F.col(column_name)
     return (
-        F.when(col.isNull(), F.lit(None).cast(StringType()))
+        F.when(col.isNull(), F.lit(None))
         .when(col <= 15, F.lit("00_15"))
         .when(col <= 30, F.lit("16_30"))
         .when(col <= 45, F.lit("31_45"))
@@ -80,6 +82,7 @@ def transform_goals(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
     team_col = resolve_column(raw_df, "clube", "team")
     player_col = resolve_column(raw_df, "atleta", "player")
     minute_col = resolve_column(raw_df, "minuto", "minute")
+    minute_raw, minute_base, stoppage_minute, minute_exact = parse_match_minute(minute_col)
     goal_type_col = resolve_column(raw_df, "tipo_de_gol", "tipo gol", "goal_type")
 
     canonical = raw_df.select(
@@ -87,10 +90,22 @@ def transform_goals(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
         F.col(round_col).cast(IntegerType()).alias("round"),
         normalize_string(team_col).alias("team"),
         normalize_string(player_col).alias("player"),
-        parse_numeric(minute_col).alias("minute"),
+        minute_raw.alias("minute_raw"),
+        minute_base.alias("minute_base"),
+        stoppage_minute.alias("stoppage_minute"),
+        minute_exact.alias("minute_exact"),
         normalize_string(goal_type_col).alias("goal_type"),
         F.to_date(F.col("_load_date"), "yyyy-MM-dd").alias("ingestion_date"),
         F.col("_source_file").alias("source_file"),
+    )
+
+    window_spec = Window.partitionBy(
+        "match_id", "team", "player", "minute_exact", "goal_type"
+    ).orderBy("source_file")
+
+    canonical = canonical.withColumn(
+        "goal_sequence",
+        F.row_number().over(window_spec)
     )
 
     enriched = (
@@ -106,7 +121,7 @@ def transform_goals(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
              .when(F.col("team") == F.col("away_team"), F.lit(False))
              .otherwise(F.lit(None).cast(BooleanType()))
         )
-        .withColumn("minute_bucket", minute_bucket_expr("minute"))
+        .withColumn("minute_bucket", minute_bucket_expr("minute_exact"))
         .withColumn(
             "goal_id",
             F.sha2(
@@ -115,8 +130,23 @@ def transform_goals(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
                     F.col("match_id").cast("string"),
                     F.coalesce(F.col("team"), F.lit("")),
                     F.coalesce(F.col("player"), F.lit("")),
-                    F.coalesce(F.col("minute").cast("string"), F.lit("")),
+                    F.coalesce(F.col("minute_exact").cast("string"), F.lit("")),
                     F.coalesce(F.col("goal_type"), F.lit("")),
+                ),
+                256,
+            )
+        )
+        .withColumn(
+            "goal_id",
+            F.sha2(
+                F.concat_ws(
+                    "||",
+                    F.col("match_id").cast("string"),
+                    F.coalesce(F.col("team"), F.lit("")),
+                    F.coalesce(F.col("player"), F.lit("")),
+                    F.coalesce(F.col("minute_exact").cast("string"), F.lit("")),
+                    F.coalesce(F.col("goal_type"), F.lit("")),
+                    F.col("goal_sequence").cast("string"),
                 ),
                 256,
             )
@@ -129,7 +159,7 @@ def transform_goals(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
             "match_date",
             "team",
             "player",
-            "minute",
+            "minute_exact",
             "minute_bucket",
             "goal_type",
             "is_home_team_goal",
@@ -149,9 +179,9 @@ def validate_silver_goals(df: DataFrame, silver_matches_df: DataFrame) -> None:
     checks.append(("null_player", df.filter(F.col("player").isNull()).count()))
     checks.append(("null_season", df.filter(F.col("season").isNull()).count()))
     checks.append(("invalid_team_for_match", df.filter(F.col("is_home_team_goal").isNull()).count()))
-    checks.append(("null_minute", df.filter(F.col("minute").isNull()).count()))
-    checks.append(("negative_minute", df.filter(F.col("minute") < 0).count()))
-    checks.append(("minute_too_high", df.filter(F.col("minute") > 130).count()))
+    checks.append(("null_minute", df.filter(F.col("minute_exact").isNull()).count()))
+    checks.append(("negative_minute", df.filter(F.col("minute_exact") < 0).count()))
+    checks.append(("minute_too_high", df.filter(F.col("minute_exact") > 130).count()))
     checks.append((
         "duplicate_goal_id",
         df.groupBy("goal_id").count().filter(F.col("count") > 1).count(),

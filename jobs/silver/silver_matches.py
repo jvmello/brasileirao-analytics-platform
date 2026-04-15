@@ -11,7 +11,7 @@ from jobs.config import AppConfig
 
 from jobs.silver.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
 
-from jobs.silver.validations import validate_silver_matches, raise_if_critical_failures, write_invalid_records
+from jobs.silver.validation import validate_silver_matches, raise_if_critical_failures, write_invalid_records
 
 
 def transform_matches(df: DataFrame) -> DataFrame:
