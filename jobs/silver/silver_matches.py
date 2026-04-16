@@ -9,7 +9,7 @@ from pyspark.sql.types import DoubleType, IntegerType, LongType, StringType
 
 from jobs.config import AppConfig
 
-from jobs.silver.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
+from jobs.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
 
 from jobs.silver.validation import validate_silver_matches, raise_if_critical_failures, write_invalid_records
 

@@ -9,9 +9,9 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, DoubleType, IntegerType, LongType
 
 from jobs.config import AppConfig
-from jobs.silver.common import build_spark_session
+from jobs.common import build_spark_session
 
-from jobs.silver.common import get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
+from jobs.common import get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
 
 def normalize_name(value: str) -> str:
     value = unicodedata.normalize("NFKD", value)

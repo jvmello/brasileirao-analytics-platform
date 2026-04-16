@@ -9,8 +9,8 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, IntegerType, LongType, StringType
 
 from jobs.config import AppConfig
-from jobs.silver.common import build_spark_session
-from jobs.silver.common import build_spark_session, normalize_string, get_silver_prefix, read_bronze_layer, filter_latest_load, parse_match_minute
+from jobs.common import build_spark_session
+from jobs.common import build_spark_session, normalize_string, get_silver_prefix, read_bronze_layer, filter_latest_load, parse_match_minute
 
 
 def get_silver_prefix(config: AppConfig) -> str:
@@ -108,7 +108,7 @@ def transform_cards(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
         minute_raw.alias("minute_raw"),
         minute_base.alias("minute_base"),
         stoppage_minute.alias("stoppage_minute"),
-        minute_exact.alias("minute_exact"),
+        minute_exact.alias("minute"),
         F.to_date(F.col("_load_date"), "yyyy-MM-dd").alias("ingestion_date"),
         F.col("_source_file").alias("source_file"),
     )
@@ -126,7 +126,7 @@ def transform_cards(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
              .when(F.col("team") == F.col("away_team"), F.lit(False))
              .otherwise(F.lit(None).cast(BooleanType()))
         )
-        .withColumn("minute_bucket", minute_bucket_expr("minute_exact"))
+        .withColumn("minute_bucket", minute_bucket_expr("minute"))
         .withColumn(
             "card_weight",
             F.when(F.col("card_type") == "yellow", F.lit(1))
@@ -143,7 +143,7 @@ def transform_cards(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
                     F.coalesce(F.col("player"), F.lit("")),
                     F.coalesce(F.col("shirt_number").cast("string"), F.lit("")),
                     F.coalesce(F.col("position"), F.lit("")),
-                    F.coalesce(F.col("minute_exact").cast("string"), F.lit("")),
+                    F.coalesce(F.col("minute").cast("string"), F.lit("")),
                     F.coalesce(F.col("card_type"), F.lit("")),
                 ),
                 256,
@@ -159,7 +159,10 @@ def transform_cards(raw_df: DataFrame, silver_matches_df: DataFrame) -> DataFram
             "player",
             "shirt_number",
             "position",
-            "minute_exact",
+            "minute_raw",
+            "minute_base",
+            "stoppage_minute",
+            "minute",
             "minute_bucket",
             "card_type",
             "card_weight",
@@ -180,9 +183,9 @@ def validate_silver_cards(df: DataFrame) -> None:
     checks.append(("null_player", df.filter(F.col("player").isNull()).count()))
     checks.append(("null_season", df.filter(F.col("season").isNull()).count()))
     checks.append(("invalid_team_for_match", df.filter(F.col("is_home_team_card").isNull()).count()))
-    checks.append(("null_minute", df.filter(F.col("minute_exact").isNull()).count()))
-    checks.append(("negative_minute", df.filter(F.col("minute_exact") < 0).count()))
-    checks.append(("minute_too_high", df.filter(F.col("minute_exact") > 130).count()))
+    checks.append(("null_minute", df.filter(F.col("minute").isNull()).count()))
+    checks.append(("negative_minute", df.filter(F.col("minute") < 0).count()))
+    checks.append(("minute_too_high", df.filter(F.col("minute") > 130).count()))
     checks.append((
         "invalid_card_type",
         df.filter(~F.col("card_type").isin("yellow", "red")).count(),
