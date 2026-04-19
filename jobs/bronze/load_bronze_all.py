@@ -5,11 +5,13 @@ import json
 from pathlib import Path
 
 from jobs.bronze.bronze_loader import load_raw_file
-from jobs.config import AppConfig, DEFAULT_SOURCE_FILES
+from jobs.config import DEFAULT_SOURCE_FILES, AppConfig
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Load all Brasileirão CSV sources into the bronze layer.")
+    parser = argparse.ArgumentParser(
+        description="Load all Brasileirão CSV sources into the bronze layer."
+    )
     parser.add_argument(
         "--data-dir",
         default=".",
@@ -31,7 +33,9 @@ def main() -> None:
     results: list[dict] = []
     for source_name, filename in DEFAULT_SOURCE_FILES.items():
         file_path = data_dir / filename
-        result = load_raw_file(file_path=file_path, source_name=source_name, config=config)
+        result = load_raw_file(
+            file_path=file_path, source_name=source_name, config=config
+        )
         results.append(result)
 
     print(json.dumps(results, ensure_ascii=False, indent=2))

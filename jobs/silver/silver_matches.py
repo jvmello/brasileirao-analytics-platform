@@ -7,11 +7,19 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import DoubleType, IntegerType, LongType, StringType
 
+from jobs.common import (
+    build_spark_session,
+    filter_latest_load,
+    get_silver_prefix,
+    normalize_string,
+    read_bronze_layer,
+)
 from jobs.config import AppConfig
-
-from jobs.common import build_spark_session, get_silver_prefix, normalize_string, read_bronze_layer, filter_latest_load
-
-from jobs.silver.validation import validate_silver_matches, raise_if_critical_failures, write_invalid_records
+from jobs.silver.validation import (
+    raise_if_critical_failures,
+    validate_silver_matches,
+    write_invalid_records,
+)
 
 
 def transform_matches(df: DataFrame) -> DataFrame:
@@ -38,22 +46,33 @@ def transform_matches(df: DataFrame) -> DataFrame:
     )
 
     transformed = (
-        renamed
-        .withColumn(
+        renamed.withColumn(
             "match_date",
             F.coalesce(
                 F.to_date("match_date_raw", "dd/MM/yyyy"),
                 F.to_date("match_date_raw", "yyyy-MM-dd"),
-            )
+            ),
         )
         .withColumn(
             "match_datetime",
             F.coalesce(
-                F.to_timestamp(F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")), "dd/MM/yyyy HH:mm"),
-                F.to_timestamp(F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")), "yyyy-MM-dd HH:mm"),
-                F.to_timestamp(F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")), "dd/MM/yyyy HH:mm:ss"),
-                F.to_timestamp(F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")), "yyyy-MM-dd HH:mm:ss"),
-            )
+                F.to_timestamp(
+                    F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")),
+                    "dd/MM/yyyy HH:mm",
+                ),
+                F.to_timestamp(
+                    F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")),
+                    "yyyy-MM-dd HH:mm",
+                ),
+                F.to_timestamp(
+                    F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")),
+                    "dd/MM/yyyy HH:mm:ss",
+                ),
+                F.to_timestamp(
+                    F.concat_ws(" ", F.col("match_date_raw"), F.col("match_time")),
+                    "yyyy-MM-dd HH:mm:ss",
+                ),
+            ),
         )
         .withColumn("season", F.year("match_date"))
         .withColumn("total_goals", F.col("home_score") + F.col("away_score"))
@@ -61,18 +80,18 @@ def transform_matches(df: DataFrame) -> DataFrame:
         .withColumn(
             "home_result",
             F.when(F.col("home_score") > F.col("away_score"), F.lit("win"))
-             .when(F.col("home_score") < F.col("away_score"), F.lit("loss"))
-             .otherwise(F.lit("draw"))
+            .when(F.col("home_score") < F.col("away_score"), F.lit("loss"))
+            .otherwise(F.lit("draw")),
         )
         .withColumn(
             "away_result",
             F.when(F.col("away_score") > F.col("home_score"), F.lit("win"))
-             .when(F.col("away_score") < F.col("home_score"), F.lit("loss"))
-             .otherwise(F.lit("draw"))
+            .when(F.col("away_score") < F.col("home_score"), F.lit("loss"))
+            .otherwise(F.lit("draw")),
         )
         .withColumn(
             "winner_normalized",
-            F.when(F.col("winner") == "-", F.lit(None)).otherwise(F.col("winner"))
+            F.when(F.col("winner") == "-", F.lit(None)).otherwise(F.col("winner")),
         )
         .drop("match_date_raw")
     )
@@ -82,10 +101,7 @@ def transform_matches(df: DataFrame) -> DataFrame:
 
 def validate_matches(df: DataFrame) -> None:
     duplicate_match_ids = (
-        df.groupBy("match_id")
-        .count()
-        .filter(F.col("count") > 1)
-        .count()
+        df.groupBy("match_id").count().filter(F.col("count") > 1).count()
     )
 
     null_match_ids = df.filter(F.col("match_id").isNull()).count()
@@ -99,16 +115,19 @@ def validate_matches(df: DataFrame) -> None:
     ).count()
 
     invalid_draw_winner = df.filter(
-        (F.col("is_draw") == True) &
-        F.col("winner").isNotNull() &
-        (F.col("winner") != "-")
+        (F.col("is_draw") == True)
+        & F.col("winner").isNotNull()
+        & (F.col("winner") != "-")
     ).count()
 
     invalid_non_draw_winner = df.filter(
-        (F.col("is_draw") == False) &
-        (
-            F.col("winner").isNull() |
-            ((F.col("winner") != F.col("home_team")) & (F.col("winner") != F.col("away_team")))
+        (F.col("is_draw") == False)
+        & (
+            F.col("winner").isNull()
+            | (
+                (F.col("winner") != F.col("home_team"))
+                & (F.col("winner") != F.col("away_team"))
+            )
         )
     ).count()
 
@@ -136,7 +155,9 @@ def validate_matches(df: DataFrame) -> None:
         errors.append(f"draw matches with invalid winner value: {invalid_draw_winner}")
 
     if invalid_non_draw_winner > 0:
-        errors.append(f"non-draw matches with invalid winner value: {invalid_non_draw_winner}")
+        errors.append(
+            f"non-draw matches with invalid winner value: {invalid_non_draw_winner}"
+        )
 
     if errors:
         raise ValueError("silver.matches validation failed:\n- " + "\n- ".join(errors))
@@ -146,20 +167,17 @@ def write_silver_matches(df: DataFrame, config: AppConfig) -> None:
     silver_prefix = get_silver_prefix(config)
     silver_path = f"s3a://{config.bucket_name}/{silver_prefix}/matches/"
 
-    (
-        df.write
-        .mode("overwrite")
-        .partitionBy("season")
-        .parquet(silver_path)
-    )
+    (df.write.mode("overwrite").partitionBy("season").parquet(silver_path))
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build silver.matches from bronze raw matches.")
+    parser = argparse.ArgumentParser(
+        description="Build silver.matches from bronze raw matches."
+    )
     parser.add_argument(
         "--load-date",
         required=False,
-        help="Optional load_date to process in YYYY-MM-DD format. Defaults to latest bronze load."
+        help="Optional load_date to process in YYYY-MM-DD format. Defaults to latest bronze load.",
     )
     return parser.parse_args()
 

@@ -28,9 +28,13 @@ class S3Storage:
         except ClientError:
             self.client.create_bucket(Bucket=self.config.bucket_name)
 
-    def upload_file(self, local_path: str, key: str, content_type: str = "text/csv") -> None:
+    def upload_file(
+        self, local_path: str, key: str, content_type: str = "text/csv"
+    ) -> None:
         extra_args = {"ContentType": content_type}
-        self.client.upload_file(local_path, self.config.bucket_name, key, ExtraArgs=extra_args)
+        self.client.upload_file(
+            local_path, self.config.bucket_name, key, ExtraArgs=extra_args
+        )
 
     def upload_json(self, payload: dict[str, Any], key: str) -> None:
         raw = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")

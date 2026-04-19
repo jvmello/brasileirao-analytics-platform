@@ -58,16 +58,18 @@ def read_csv_headers_and_row_count(file_path: Path) -> tuple[list[str], int]:
     raise RuntimeError(f"Unable to read CSV metadata for {file_path}") from last_error
 
 
-def build_s3_keys(source_name: str, original_filename: str, load_date: str, config: AppConfig) -> tuple[str, str]:
+def build_s3_keys(
+    source_name: str, original_filename: str, load_date: str, config: AppConfig
+) -> tuple[str, str]:
     raw_key = f"{config.bronze_raw_prefix}/source={source_name}/load_date={load_date}/{original_filename}"
     metadata_filename = f"{Path(original_filename).stem}.metadata.json"
-    metadata_key = (
-        f"{config.bronze_metadata_prefix}/source={source_name}/load_date={load_date}/{metadata_filename}"
-    )
+    metadata_key = f"{config.bronze_metadata_prefix}/source={source_name}/load_date={load_date}/{metadata_filename}"
     return raw_key, metadata_key
 
 
-def build_metadata(file_path: Path, source_name: str, config: AppConfig) -> FileMetadata:
+def build_metadata(
+    file_path: Path, source_name: str, config: AppConfig
+) -> FileMetadata:
     now = datetime.now(timezone.utc)
     load_date = now.date().isoformat()
     raw_key, metadata_key = build_s3_keys(
@@ -95,14 +97,18 @@ def build_metadata(file_path: Path, source_name: str, config: AppConfig) -> File
     )
 
 
-def load_raw_file(file_path: Path, source_name: str, config: AppConfig) -> dict[str, Any]:
+def load_raw_file(
+    file_path: Path, source_name: str, config: AppConfig
+) -> dict[str, Any]:
     if not file_path.exists():
         raise FileNotFoundError(f"Source file not found: {file_path}")
 
     storage = S3Storage(config)
     storage.ensure_bucket_exists()
 
-    metadata = build_metadata(file_path=file_path, source_name=source_name, config=config)
+    metadata = build_metadata(
+        file_path=file_path, source_name=source_name, config=config
+    )
     metadata_payload = asdict(metadata)
 
     storage.upload_file(str(file_path), metadata.raw_s3_key)
@@ -112,10 +118,18 @@ def load_raw_file(file_path: Path, source_name: str, config: AppConfig) -> dict[
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Load a raw Brasileirão CSV file into the bronze layer.")
-    parser.add_argument("--source-name", required=True, help="Logical source name in English, e.g. matches")
+    parser = argparse.ArgumentParser(
+        description="Load a raw Brasileirão CSV file into the bronze layer."
+    )
+    parser.add_argument(
+        "--source-name",
+        required=True,
+        help="Logical source name in English, e.g. matches",
+    )
     parser.add_argument("--file-path", required=True, help="Local path to the CSV file")
-    parser.add_argument("--bucket", default=None, help="Override the target bucket name")
+    parser.add_argument(
+        "--bucket", default=None, help="Override the target bucket name"
+    )
     return parser.parse_args()
 
 

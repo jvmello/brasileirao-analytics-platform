@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+
 from dotenv import load_dotenv
 
 
@@ -16,7 +17,12 @@ class AppConfig:
     aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY", "password123")
     aws_region: str = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
     s3_endpoint_url: str = os.getenv("S3_ENDPOINT_URL", "http://localhost:9000")
-    silver_prefix: str = field(default_factory=lambda: os.getenv("SILVER_PREFIX", "silver"))
+    silver_prefix: str = field(
+        default_factory=lambda: os.getenv("SILVER_PREFIX", "silver")
+    )
+    gold_prefix: str = field(
+        default_factory=lambda: os.getenv("GOLD_PREFIX", "gold")
+    )
 
 
 DEFAULT_SOURCE_FILES = {

@@ -5,8 +5,8 @@ import os
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from jobs.config import AppConfig
 from jobs.common import build_spark_session
+from jobs.config import AppConfig
 
 
 def get_gold_prefix(config: AppConfig) -> str:
@@ -26,8 +26,12 @@ def transform_top_scorers(df: DataFrame) -> DataFrame:
         .agg(
             F.count("*").alias("goals"),
             F.avg("minute").alias("avg_goal_minute"),
-            F.sum(F.when(F.col("goal_type") == "penalti", 1).otherwise(0)).alias("penalty_goals"),
-            F.sum(F.when(F.col("goal_type") == "gol_contra", 1).otherwise(0)).alias("own_goals_labeled"),
+            F.sum(F.when(F.col("goal_type") == "penalti", 1).otherwise(0)).alias(
+                "penalty_goals"
+            ),
+            F.sum(F.when(F.col("goal_type") == "gol_contra", 1).otherwise(0)).alias(
+                "own_goals_labeled"
+            ),
         )
     )
 
@@ -35,12 +39,7 @@ def transform_top_scorers(df: DataFrame) -> DataFrame:
 def write_top_scorers(df: DataFrame, config: AppConfig) -> None:
     gold_prefix = get_gold_prefix(config)
     path = f"s3a://{config.bucket_name}/{gold_prefix}/marts/top_scorers_by_season/"
-    (
-        df.write
-        .mode("overwrite")
-        .partitionBy("season")
-        .parquet(path)
-    )
+    (df.write.mode("overwrite").partitionBy("season").parquet(path))
 
 
 def main() -> None:

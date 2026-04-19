@@ -5,15 +5,17 @@ import os
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from jobs.config import AppConfig
 from jobs.common import build_spark_session
+from jobs.config import AppConfig
 
 
 def get_gold_prefix(config: AppConfig) -> str:
     return getattr(config, "gold_prefix", os.getenv("GOLD_PREFIX", "gold")).rstrip("/")
 
 
-def read_fact_team_match_statistics(spark: SparkSession, config: AppConfig) -> DataFrame:
+def read_fact_team_match_statistics(
+    spark: SparkSession, config: AppConfig
+) -> DataFrame:
     gold_prefix = get_gold_prefix(config)
     path = f"s3a://{config.bucket_name}/{gold_prefix}/fact_team_match_statistics/"
     return spark.read.parquet(path)
@@ -39,8 +41,9 @@ def transform_team_home_away_summary(df: DataFrame) -> DataFrame:
         .withColumn("goal_difference", F.col("goals_for") - F.col("goals_against"))
         .withColumn(
             "points_pct",
-            F.when(F.col("matches") == 0, F.lit(None))
-             .otherwise(F.col("points") / (F.col("matches") * F.lit(3)))
+            F.when(F.col("matches") == 0, F.lit(None)).otherwise(
+                F.col("points") / (F.col("matches") * F.lit(3))
+            ),
         )
     )
 
@@ -48,12 +51,7 @@ def transform_team_home_away_summary(df: DataFrame) -> DataFrame:
 def write_team_home_away_summary(df: DataFrame, config: AppConfig) -> None:
     gold_prefix = get_gold_prefix(config)
     path = f"s3a://{config.bucket_name}/{gold_prefix}/marts/team_home_away_summary/"
-    (
-        df.write
-        .mode("overwrite")
-        .partitionBy("season")
-        .parquet(path)
-    )
+    (df.write.mode("overwrite").partitionBy("season").parquet(path))
 
 
 def main() -> None:
