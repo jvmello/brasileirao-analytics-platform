@@ -70,6 +70,8 @@ def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
         .config(
             "spark.hadoop.fs.s3a.aws.credentials.provider",
             "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
+            "spark.jars.packages",
+            "org.apache.hadoop:hadoop-aws:3.4.1",
         )
         .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000")
         .config("spark.hadoop.fs.s3a.connection.timeout", "60000")
