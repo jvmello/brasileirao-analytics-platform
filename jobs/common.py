@@ -60,6 +60,7 @@ def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
     """
     spark = (
         SparkSession.builder.appName(app_name)
+        # S3 config
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.endpoint", config.s3_endpoint_url)
         .config("spark.hadoop.fs.s3a.endpoint.region", config.aws_region)
@@ -67,19 +68,60 @@ def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
         .config("spark.hadoop.fs.s3a.secret.key", config.aws_secret_access_key)
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+
+        # credenciais
         .config(
             "spark.hadoop.fs.s3a.aws.credentials.provider",
             "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
-            "spark.jars.packages",
-            "org.apache.hadoop:hadoop-aws:3.4.1",
         )
+
+        # 👉 JARS (ESSENCIAL)
+        .config(
+            "spark.jars.packages",
+            "org.apache.hadoop:hadoop-aws:3.4.1,org.postgresql:postgresql:42.7.3"
+        )
+
+        # timeouts
         .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000")
         .config("spark.hadoop.fs.s3a.connection.timeout", "60000")
         .config("spark.hadoop.fs.s3a.connection.request.timeout", "60000")
+
         .getOrCreate()
     )
 
+    hadoop_conf = spark._jsc.hadoopConfiguration()
+
+    hadoop_conf = spark._jsc.hadoopConfiguration()
+
+    # timeouts (todos)
+    hadoop_conf.set("fs.s3a.connection.timeout", "60000")
+    hadoop_conf.set("fs.s3a.connection.establish.timeout", "60000")
+    hadoop_conf.set("fs.s3a.connection.request.timeout", "60000")
+    hadoop_conf.set("fs.s3a.socket.timeout", "60000")
+
+    # pooling / threads
+    hadoop_conf.set("fs.s3a.connection.maximum", "100")
+    hadoop_conf.set("fs.s3a.threads.max", "20")
+
+    # TTL / idle (CRÍTICO)
+    hadoop_conf.set("fs.s3a.connection.ttl", "300000")
+    hadoop_conf.set("fs.s3a.connection.idle.time", "60000")
+
+    # retries
+    hadoop_conf.set("fs.s3a.attempts.maximum", "3")
+    hadoop_conf.set("fs.s3a.retry.limit", "3")
+
+    hadoop_conf.set("fs.s3a.connection.maximum", "1")
+    hadoop_conf.set("fs.s3a.threads.max", "1")
+
+    conf = spark.sparkContext._jsc.hadoopConfiguration()
+
+    conf.set("fs.s3a.threads.keepalivetime", "60000")
+    conf.set("fs.s3a.multipart.purge.age", "86400000")
+
+    conf = spark.sparkContext._jsc.hadoopConfiguration()
     spark.sparkContext.setLogLevel("WARN")
+
     return spark
 
 

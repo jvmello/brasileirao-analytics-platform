@@ -11,7 +11,7 @@ POSTGRES_PROPERTIES = {
     "driver": "org.postgresql.Driver"
 }
 
-BASE_PATH = "s3a://datalake/gold"
+BASE_PATH = "s3a://brasileirao/gold"
 
 
 def write_table(df, table_name, mode="overwrite"):
