@@ -38,6 +38,8 @@ services:
       - ./data:/home/jovyan/data
       - ./jobs:/home/jovyan/jobs
       - ./transformations:/home/jovyan/transformations
+      - ./jars/postgresql-42.7.3.jar:/usr/local/spark/jars/postgresql-42.7.3.jar
+    build: .
 
   postgres:
     image: postgres:14
@@ -45,16 +47,19 @@ services:
     user: "postgres"
     command: ["postgres"]
     environment:
-      POSTGRES_USER: dbt
-      POSTGRES_PASSWORD: dbt
-      POSTGRES_DB: warehouse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: brasileirao
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dbt -d warehouse"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d brasileirao"]
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/db_init.sql:/docker-entrypoint-initdb.d/init.sql
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.7.0
@@ -64,3 +69,6 @@ services:
     working_dir: /usr/app
     entrypoint: ["/bin/sh", "-c"]
     command: ["while true; do sleep 1000; done"]
+
+volumes:
+  postgres_data:
