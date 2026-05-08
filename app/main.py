@@ -1,7 +1,10 @@
 from fastapi import FastAPI
-from app.routers import standings, head_to_head
+from app.routers import standings, head_to_head, rounds, matches, teams
 
 app = FastAPI()
 
-app.include_router(standings.router)
-app.include_router(head_to_head.router)
+app.include_router(matches.router, prefix="/api/v1")
+app.include_router(head_to_head.router, prefix="/api/v1")
+app.include_router(rounds.router, prefix="/api/v1")
+app.include_router(standings.router, prefix="/api/v1")
+app.include_router(teams.router, prefix="/api/v1")

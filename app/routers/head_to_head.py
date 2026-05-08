@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.services.head_to_head_service import get_head_to_head
+from app.services.head_to_head import get_head_to_head
 
 router = APIRouter(prefix="/head-to-head", tags=["Head to Head"])
 

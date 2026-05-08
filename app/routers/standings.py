@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.services.standings_service import get_standings
+from app.services.standings import get_standings
 
 router = APIRouter(prefix="/standings", tags=["Standings"])
 
