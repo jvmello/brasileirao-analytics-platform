@@ -1,7 +1,7 @@
 from app.db.session import get_connection
 
 
-def get_match_detail(match_id: int):
+def get_match(match_id: int):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -66,8 +66,15 @@ def get_match_detail(match_id: int):
             """, (match_id,))
             stats_rows = cur.fetchall()
 
-    home_stats = next((s for s in stats_rows if s["team"] == match["home_team"]), None)
-    away_stats = next((s for s in stats_rows if s["team"] == match["away_team"]), None)
+    home_stats = next(
+        (s for s in stats_rows if s["team_id"] == match["home_team_id"]),
+        None,
+    )
+
+    away_stats = next(
+        (s for s in stats_rows if s["team_id"] == match["away_team_id"]),
+        None,
+    )
 
     return {
         "match": {

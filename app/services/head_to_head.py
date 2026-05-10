@@ -1,6 +1,7 @@
 from app.db.session import get_connection
+from typing import Optional
 
-def get_head_to_head(team1_id: int, team2_id: int):
+def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -16,13 +17,31 @@ def get_head_to_head(team1_id: int, team2_id: int):
     JOIN analytics.dim_team ht ON m.home_team_id = ht.team_id
     JOIN analytics.dim_team at ON m.away_team_id = at.team_id
     WHERE 
-        (m.home_team_id = %s AND m.away_team_id = %s)
-        OR
-        (m.home_team_id = %s AND m.away_team_id = %s)
-    ORDER BY m.match_date DESC
+        (
+            (m.home_team_id = %s AND m.away_team_id = %s)
+            OR
+            (m.home_team_id = %s AND m.away_team_id = %s)
+        )
     """
 
-    cur.execute(query, (team1_id, team2_id, team2_id, team1_id))
+    params = [
+        team1_id,
+        team2_id,
+        team2_id,
+        team1_id,
+    ]
+
+    if season is not None:
+        query += """
+            AND m.season = %s
+        """
+        params.append(season)
+
+    query += """
+        ORDER BY m.match_date DESC
+    """
+
+    cur.execute(query, params)
     matches = cur.fetchall()
 
     # resumo
