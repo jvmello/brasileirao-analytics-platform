@@ -20,6 +20,15 @@ def get_gold_prefix(config: AppConfig) -> str:
     return getattr(config, "gold_prefix", os.getenv("GOLD_PREFIX", "gold")).rstrip("/")
 
 
+def read_dim_team(spark: SparkSession, config: AppConfig) -> DataFrame:
+    path = f"s3a://{config.bucket_name}/{get_gold_prefix(config)}/dim_team/"
+    return spark.read.parquet(path)
+
+
+def read_dim_stadium(spark: SparkSession, config: AppConfig) -> DataFrame:
+    path = f"s3a://{config.bucket_name}/{get_gold_prefix(config)}/dim_stadium/"
+    return spark.read.parquet(path)
+
 def read_silver_matches(spark: SparkSession, config: AppConfig) -> DataFrame:
     silver_prefix = get_silver_prefix(config)
     silver_matches_path = f"s3a://{config.bucket_name}/{silver_prefix}/matches/"
@@ -27,47 +36,68 @@ def read_silver_matches(spark: SparkSession, config: AppConfig) -> DataFrame:
     return spark.read.parquet(silver_matches_path)
 
 
-def transform_fact_matches(silver_matches_df: DataFrame) -> DataFrame:
+def transform_fact_matches(
+    silver_matches_df: DataFrame,
+    dim_team_df: DataFrame,
+    dim_stadium_df: DataFrame,
+) -> DataFrame:
+    home_team = dim_team_df.select(
+        F.col("id").alias("home_team_id"),
+        F.col("team_name_raw").alias("home_team_raw"),
+    )
+
+    away_team = dim_team_df.select(
+        F.col("id").alias("away_team_id"),
+        F.col("team_name_raw").alias("away_team_raw"),
+    )
+
+    stadium = dim_stadium_df.select(
+        F.col("id").alias("stadium_id"),
+        F.col("stadium_raw"),
+    )
+
     return (
-        silver_matches_df.select(
-            "match_id",
-            "round",
-            "match_date",
-            "match_time",
-            "match_datetime",
-            "season",
-            "home_team",
-            "away_team",
-            "home_formation",
-            "away_formation",
-            "home_coach",
-            "away_coach",
-            "winner",
-            "winner_normalized",
-            "stadium",
-            "home_score",
-            "away_score",
-            "home_state",
-            "away_state",
-            "gross_revenue",
-            "is_draw",
-            "home_result",
-            "away_result",
-            "total_goals",
+        silver_matches_df.alias("m")
+        .join(home_team.alias("ht"), F.col("m.home_team") == F.col("ht.home_team_raw"), "left")
+        .join(away_team.alias("at"), F.col("m.away_team") == F.col("at.away_team_raw"), "left")
+        .join(stadium.alias("s"), F.col("m.stadium") == F.col("s.stadium_raw"), "left")
+        .select(
+            F.col("m.match_id"),
+            F.col("m.round"),
+            F.col("m.match_date"),
+            F.col("m.match_time"),
+            F.col("m.match_datetime"),
+            F.col("m.season"),
+            F.col("s.stadium_id"),
+            F.col("ht.home_team_id"),
+            F.col("at.away_team_id"),
+            F.col("m.home_formation"),
+            F.col("m.away_formation"),
+            F.col("m.home_coach"),
+            F.col("m.away_coach"),
+            F.col("m.winner"),
+            F.col("m.winner_normalized"),
+            F.col("m.home_score"),
+            F.col("m.away_score"),
+            F.col("m.gross_revenue"),
+            F.col("m.is_draw"),
+            F.col("m.home_result"),
+            F.col("m.away_result"),
+            F.col("m.total_goals"),
         )
         .withColumn(
             "match_points_home",
             F.when(F.col("home_result") == "win", F.lit(3))
             .when(F.col("home_result") == "draw", F.lit(1))
             .when(F.col("home_result") == "loss", F.lit(0))
-            .otherwise(F.lit(None).cast(IntegerType())),
+            .otherwise(F.lit(None)),
         )
         .withColumn(
             "match_points_away",
             F.when(F.col("away_result") == "win", F.lit(3))
             .when(F.col("away_result") == "draw", F.lit(1))
             .when(F.col("away_result") == "loss", F.lit(0))
-            .otherwise(F.lit(None).cast(IntegerType())),
+            .otherwise(F.lit(None)),
         )
         .withColumn(
             "home_win_flag",
@@ -78,7 +108,8 @@ def transform_fact_matches(silver_matches_df: DataFrame) -> DataFrame:
             F.when(F.col("away_result") == "win", F.lit(1)).otherwise(F.lit(0)),
         )
         .withColumn(
-            "draw_flag", F.when(F.col("is_draw") == True, F.lit(1)).otherwise(F.lit(0))
+            "draw_flag",
+            F.when(F.col("is_draw") == True, F.lit(1)).otherwise(F.lit(0)),
         )
     )
 
@@ -165,6 +196,10 @@ def validate_fact_matches(df: DataFrame) -> None:
         )
     )
 
+    checks.append(("null_home_team_id", df.filter(F.col("home_team_id").isNull()).count()))
+    checks.append(("null_away_team_id", df.filter(F.col("away_team_id").isNull()).count()))
+    checks.append(("null_stadium_id", df.filter(F.col("stadium_id").isNull()).count()))
+
     failing = [(name, count) for name, count in checks if count > 0]
 
     if failing:
@@ -188,6 +223,14 @@ def main() -> None:
 
     try:
         silver_matches = read_silver_matches(spark, config)
+        dim_team = read_dim_team(spark, config)
+        dim_stadium = read_dim_stadium(spark, config)
+
+        fact_matches = transform_fact_matches(
+            silver_matches,
+            dim_team,
+            dim_stadium,
+        )
 
         if silver_matches.limit(1).count() == 0:
             raise ValueError("No silver matches files found.")

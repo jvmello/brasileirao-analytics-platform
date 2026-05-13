@@ -9,7 +9,9 @@ def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None)
     SELECT 
         m.match_id,
         m.match_date,
+        ht.team_id as home_team_id,
         ht.team_name as home_team,
+        at.team_id as away_team_id,
         at.team_name as away_team,
         m.home_score,
         m.away_score

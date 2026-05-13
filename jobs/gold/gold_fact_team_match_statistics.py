@@ -26,31 +26,31 @@ def read_silver_match_statistics(spark: SparkSession, config: AppConfig) -> Data
     return spark.read.parquet(path)
 
 
-def transform_fact_team_match_statistics(df: DataFrame) -> DataFrame:
+def transform_fact_team_match_statistics(
+    df: DataFrame,
+    dim_team_df: DataFrame,
+    fact_matches_df: DataFrame,
+) -> DataFrame:
+    teams = dim_team_df.select(
+        F.col("id").alias("team_id"),
+        F.col("team_name_raw"),
+    )
+
+    matches = fact_matches_df.select(
+        "match_id",
+        "home_team_id",
+        "away_team_id",
+    )
+
     return (
-        df.select(
-            "match_id",
-            "round",
-            "season",
-            "match_date",
-            "team",
-            "opponent_team",
-            "is_home_team",
-            "match_result",
-            "goals_scored",
-            "goals_conceded",
-            "shots",
-            "shots_on_target",
-            "shot_accuracy",
-            "scoring_efficiency",
-            "possession",
-            "passes",
-            "pass_accuracy",
-            "fouls",
-            "yellow_cards",
-            "red_cards",
-            "offsides",
-            "corners",
+        df.alias("s")
+        .join(teams.alias("t"), F.col("s.team") == F.col("t.team_name_raw"), "left")
+        .join(matches.alias("m"), F.col("s.match_id") == F.col("m.match_id"), "left")
+        .withColumn(
+            "opponent_team_id",
+            F.when(F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id"))
+            .when(F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id"))
+            .otherwise(F.lit(None)),
         )
         .withColumn(
             "match_side",
@@ -63,23 +63,43 @@ def transform_fact_team_match_statistics(df: DataFrame) -> DataFrame:
             F.when(F.col("match_result") == "win", F.lit(3))
             .when(F.col("match_result") == "draw", F.lit(1))
             .when(F.col("match_result") == "loss", F.lit(0))
-            .otherwise(F.lit(None).cast(IntegerType())),
+            .otherwise(F.lit(None)),
         )
-        .withColumn(
-            "win_flag",
-            F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "draw_flag",
-            F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "loss_flag",
-            F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "clean_sheet_flag",
-            F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)),
+        .withColumn("win_flag", F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("draw_flag", F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("loss_flag", F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("clean_sheet_flag", F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)))
+        .select(
+            F.col("s.match_id"),
+            F.col("s.round"),
+            F.col("s.season"),
+            F.col("s.match_date"),
+            F.col("t.team_id"),
+            F.col("opponent_team_id"),
+            F.col("s.team"),
+            F.col("s.opponent_team"),
+            F.col("s.is_home_team"),
+            F.col("s.match_result"),
+            F.col("s.goals_scored"),
+            F.col("s.goals_conceded"),
+            F.col("s.shots"),
+            F.col("s.shots_on_target"),
+            F.col("s.shot_accuracy"),
+            F.col("s.scoring_efficiency"),
+            F.col("s.possession"),
+            F.col("s.passes"),
+            F.col("s.pass_accuracy"),
+            F.col("s.fouls"),
+            F.col("s.yellow_cards"),
+            F.col("s.red_cards"),
+            F.col("s.offsides"),
+            F.col("s.corners"),
+            F.col("match_side"),
+            F.col("match_points"),
+            F.col("win_flag"),
+            F.col("draw_flag"),
+            F.col("loss_flag"),
+            F.col("clean_sheet_flag"),
         )
     )
 
