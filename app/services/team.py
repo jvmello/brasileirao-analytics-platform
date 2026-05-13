@@ -4,36 +4,46 @@ from app.db.session import get_connection
 def get_team_dashboard(season: int, team_id: int):
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     team_id,
                     team_name
                 FROM analytics.dim_team
                 WHERE team_id = %s
-            """, (team_id,))
+            """,
+                (team_id,),
+            )
             team = cur.fetchone()
 
             if not team:
                 return None
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT *
                 FROM analytics.team_season_summary
                 WHERE season = %s
                   AND team_id = %s
-            """, (season, team_id))
+            """,
+                (season, team_id),
+            )
             summary = cur.fetchone()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT *
                 FROM analytics.team_home_away_summary
                 WHERE season = %s
                   AND team_id = %s
                 ORDER BY match_side
-            """, (season, team_id))
+            """,
+                (season, team_id),
+            )
             home_away = cur.fetchall()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     m.match_id,
                     m.round,
@@ -52,10 +62,13 @@ def get_team_dashboard(season: int, team_id: int):
                   AND s.team_id = %s
                 ORDER BY m.match_date DESC
                 LIMIT 10
-            """, (season, team_id))
+            """,
+                (season, team_id),
+            )
             recent_matches = cur.fetchall()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     player_id,
                     player,
@@ -66,15 +79,20 @@ def get_team_dashboard(season: int, team_id: int):
                   AND team_id = %s
                 ORDER BY goals DESC, player ASC
                 LIMIT 10
-            """, (season, team_id))
+            """,
+                (season, team_id),
+            )
             top_scorers = cur.fetchall()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT *
                 FROM analytics.team_discipline_summary
                 WHERE season = %s
                   AND team_id = %s
-            """, (season, team_id))
+            """,
+                (season, team_id),
+            )
             discipline = cur.fetchone()
 
     return {

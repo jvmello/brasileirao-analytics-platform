@@ -8,7 +8,7 @@ POSTGRES_URL = "jdbc:postgresql://localhost:5432/brasileirao"
 POSTGRES_PROPERTIES = {
     "user": "postgres",
     "password": "postgres",
-    "driver": "org.postgresql.Driver"
+    "driver": "org.postgresql.Driver",
 }
 
 BASE_PATH = "s3a://brasileirao/gold"
@@ -18,8 +18,7 @@ def write_table(df, table_name, mode="overwrite"):
     print(f"Writing table: {table_name}")
 
     (
-        df.write
-        .format("jdbc")
+        df.write.format("jdbc")
         .option("url", POSTGRES_URL)
         .option("dbtable", f"analytics.{table_name}")
         .option("user", POSTGRES_PROPERTIES["user"])
@@ -28,6 +27,7 @@ def write_table(df, table_name, mode="overwrite"):
         .mode(mode)
         .save()
     )
+
 
 def load_dim_tables(spark):
     print("Loading DIM tables...")
@@ -40,13 +40,16 @@ def load_dim_tables(spark):
     write_table(dim_player, "dim_player")
     write_table(dim_stadium, "dim_stadium")
 
+
 def load_fact_tables(spark):
     print("Loading FACT tables...")
 
     fact_matches = spark.read.parquet(f"{BASE_PATH}/fact_matches")
     fact_goals = spark.read.parquet(f"{BASE_PATH}/fact_goals")
     fact_cards = spark.read.parquet(f"{BASE_PATH}/fact_cards")
-    fact_team_match_statistics = spark.read.parquet(f"{BASE_PATH}/fact_team_match_statistics")
+    fact_team_match_statistics = spark.read.parquet(
+        f"{BASE_PATH}/fact_team_match_statistics"
+    )
 
     # Ordem importa por causa das FKs
     write_table(fact_matches, "fact_matches")

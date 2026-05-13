@@ -11,7 +11,9 @@ from jobs.config import AppConfig
 
 
 def get_silver_prefix(config: AppConfig) -> str:
-    return getattr(config, "silver_prefix", os.getenv("SILVER_PREFIX", "silver")).rstrip("/")
+    return getattr(
+        config, "silver_prefix", os.getenv("SILVER_PREFIX", "silver")
+    ).rstrip("/")
 
 
 def get_gold_prefix(config: AppConfig) -> str:
@@ -27,8 +29,7 @@ def read_stadium_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
     path = f"{config.seeds_path.rstrip('/')}/stadium_mapping.csv"
 
     return (
-        spark.read
-        .option("header", "true")
+        spark.read.option("header", "true")
         .csv(path)
         .select(
             F.trim(F.col("stadium_raw")).alias("stadium_raw"),
@@ -39,10 +40,11 @@ def read_stadium_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
     )
 
 
-def transform_dim_stadium(matches_df: DataFrame, stadium_mapping_df: DataFrame) -> DataFrame:
+def transform_dim_stadium(
+    matches_df: DataFrame, stadium_mapping_df: DataFrame
+) -> DataFrame:
     stadiums = (
-        matches_df
-        .select(F.trim(F.col("stadium")).alias("stadium_raw"))
+        matches_df.select(F.trim(F.col("stadium")).alias("stadium_raw"))
         .filter(F.col("stadium_raw").isNotNull())
         .dropDuplicates(["stadium_raw"])
     )
@@ -61,16 +63,12 @@ def transform_dim_stadium(matches_df: DataFrame, stadium_mapping_df: DataFrame) 
 
     window = Window.orderBy("stadium_raw")
 
-    return (
-        mapped
-        .withColumn("id", F.dense_rank().over(window).cast("long"))
-        .select(
-            "id",
-            "stadium_raw",
-            "stadium_name",
-            "city",
-            "state",
-        )
+    return mapped.withColumn("id", F.dense_rank().over(window).cast("long")).select(
+        "id",
+        "stadium_raw",
+        "stadium_name",
+        "city",
+        "state",
     )
 
 

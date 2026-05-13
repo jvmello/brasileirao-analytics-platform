@@ -11,7 +11,9 @@ from jobs.config import AppConfig
 
 
 def get_silver_prefix(config: AppConfig) -> str:
-    return getattr(config, "silver_prefix", os.getenv("SILVER_PREFIX", "silver")).rstrip("/")
+    return getattr(
+        config, "silver_prefix", os.getenv("SILVER_PREFIX", "silver")
+    ).rstrip("/")
 
 
 def get_gold_prefix(config: AppConfig) -> str:
@@ -27,8 +29,7 @@ def read_team_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
     path = f"{config.seeds_path.rstrip('/')}/team_mapping.csv"
 
     return (
-        spark.read
-        .option("header", "true")
+        spark.read.option("header", "true")
         .csv(path)
         .select(
             F.trim(F.col("team_name_raw")).alias("team_name_raw"),
@@ -50,8 +51,7 @@ def transform_dim_team(matches_df: DataFrame, team_mapping_df: DataFrame) -> Dat
     )
 
     teams = (
-        home_teams
-        .unionByName(away_teams)
+        home_teams.unionByName(away_teams)
         .filter(F.col("team_name_raw").isNotNull())
         .dropDuplicates(["team_name_raw"])
     )
@@ -59,9 +59,10 @@ def transform_dim_team(matches_df: DataFrame, team_mapping_df: DataFrame) -> Dat
     window = Window.orderBy("team_name_raw")
 
     return (
-        teams
-        .join(team_mapping_df, on="team_name_raw", how="left")
-        .withColumn("team_name", F.coalesce(F.col("mapped_team_name"), F.col("team_name_raw")))
+        teams.join(team_mapping_df, on="team_name_raw", how="left")
+        .withColumn(
+            "team_name", F.coalesce(F.col("mapped_team_name"), F.col("team_name_raw"))
+        )
         .withColumn("state", F.coalesce(F.col("mapped_state"), F.col("state_raw")))
         .withColumn("id", F.dense_rank().over(window).cast("long"))
         .select(

@@ -4,7 +4,8 @@ from app.db.session import get_connection
 def get_match(match_id: int):
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     m.match_id,
                     m.season,
@@ -21,13 +22,16 @@ def get_match(match_id: int):
                 JOIN analytics.dim_team ht ON ht.team_id = m.home_team_id
                 JOIN analytics.dim_team at ON at.team_id = m.away_team_id
                 WHERE m.match_id = %s
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
             match = cur.fetchone()
 
             if not match:
                 return None
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     g.minute,
                     g.minute_raw,
@@ -40,10 +44,13 @@ def get_match(match_id: int):
                 LEFT JOIN analytics.dim_player p ON p.player_id = g.player_id
                 WHERE g.match_id = %s
                 ORDER BY g.minute
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
             goals = cur.fetchall()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     c.minute,
                     c.minute_raw,
@@ -56,14 +63,19 @@ def get_match(match_id: int):
                 LEFT JOIN analytics.dim_player p ON p.player_id = c.player_id
                 WHERE c.match_id = %s
                 ORDER BY c.minute
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
             cards = cur.fetchall()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT *
                 FROM analytics.fact_team_match_statistics
                 WHERE match_id = %s
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
             stats_rows = cur.fetchall()
 
     home_stats = next(

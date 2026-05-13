@@ -1,5 +1,7 @@
-from app.db.session import get_connection
 from typing import Optional
+
+from app.db.session import get_connection
+
 
 def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None):
     conn = get_connection()
@@ -47,18 +49,13 @@ def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None)
     matches = cur.fetchall()
 
     # resumo
-    summary = {
-        "team1_wins": 0,
-        "team2_wins": 0,
-        "draws": 0
-    }
+    summary = {"team1_wins": 0, "team2_wins": 0, "draws": 0}
 
     for m in matches:
         if m["home_score"] == m["away_score"]:
             summary["draws"] += 1
-        elif (
-            (m["home_team_id"] == team1_id and m["home_score"] > m["away_score"]) or
-            (m["away_team_id"] == team1_id and m["away_score"] > m["home_score"])
+        elif (m["home_team_id"] == team1_id and m["home_score"] > m["away_score"]) or (
+            m["away_team_id"] == team1_id and m["away_score"] > m["home_score"]
         ):
             summary["team1_wins"] += 1
         else:
@@ -67,7 +64,4 @@ def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None)
     cur.close()
     conn.close()
 
-    return {
-        "summary": summary,
-        "matches": matches
-    }
+    return {"summary": summary, "matches": matches}

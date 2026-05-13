@@ -1,7 +1,9 @@
 from fastapi import APIRouter
+
 from app.services.round import get_round_matches
 
 router = APIRouter(prefix="/rounds", tags=["Rounds"])
+
 
 @router.get("/", summary="Get matches by round")
 def round_matches(season: int, round: int):

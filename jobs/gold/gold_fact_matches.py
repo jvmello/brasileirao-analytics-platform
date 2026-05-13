@@ -29,6 +29,7 @@ def read_dim_stadium(spark: SparkSession, config: AppConfig) -> DataFrame:
     path = f"s3a://{config.bucket_name}/{get_gold_prefix(config)}/dim_stadium/"
     return spark.read.parquet(path)
 
+
 def read_silver_matches(spark: SparkSession, config: AppConfig) -> DataFrame:
     silver_prefix = get_silver_prefix(config)
     silver_matches_path = f"s3a://{config.bucket_name}/{silver_prefix}/matches/"
@@ -58,8 +59,16 @@ def transform_fact_matches(
 
     return (
         silver_matches_df.alias("m")
-        .join(home_team.alias("ht"), F.col("m.home_team") == F.col("ht.home_team_raw"), "left")
-        .join(away_team.alias("at"), F.col("m.away_team") == F.col("at.away_team_raw"), "left")
+        .join(
+            home_team.alias("ht"),
+            F.col("m.home_team") == F.col("ht.home_team_raw"),
+            "left",
+        )
+        .join(
+            away_team.alias("at"),
+            F.col("m.away_team") == F.col("at.away_team_raw"),
+            "left",
+        )
         .join(stadium.alias("s"), F.col("m.stadium") == F.col("s.stadium_raw"), "left")
         .select(
             F.col("m.match_id"),
@@ -196,8 +205,12 @@ def validate_fact_matches(df: DataFrame) -> None:
         )
     )
 
-    checks.append(("null_home_team_id", df.filter(F.col("home_team_id").isNull()).count()))
-    checks.append(("null_away_team_id", df.filter(F.col("away_team_id").isNull()).count()))
+    checks.append(
+        ("null_home_team_id", df.filter(F.col("home_team_id").isNull()).count())
+    )
+    checks.append(
+        ("null_away_team_id", df.filter(F.col("away_team_id").isNull()).count())
+    )
     checks.append(("null_stadium_id", df.filter(F.col("stadium_id").isNull()).count()))
 
     failing = [(name, count) for name, count in checks if count > 0]

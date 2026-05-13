@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.routers import standings, head_to_head, rounds, matches, teams
+
+from app.routers import head_to_head, matches, rounds, standings, teams
 
 app = FastAPI()
 

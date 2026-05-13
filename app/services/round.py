@@ -4,7 +4,8 @@ from app.db.session import get_connection
 def get_round_matches(season: int, round: int):
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     m.match_id,
                     m.season,
@@ -21,7 +22,9 @@ def get_round_matches(season: int, round: int):
                 WHERE m.season = %s
                   AND m.round = %s
                 ORDER BY m.match_date, m.match_id
-            """, (season, round))
+            """,
+                (season, round),
+            )
             matches = cur.fetchall()
 
     return {

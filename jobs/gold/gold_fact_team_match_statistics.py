@@ -48,8 +48,12 @@ def transform_fact_team_match_statistics(
         .join(matches.alias("m"), F.col("s.match_id") == F.col("m.match_id"), "left")
         .withColumn(
             "opponent_team_id",
-            F.when(F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id"))
-            .when(F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id"))
+            F.when(
+                F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id")
+            )
+            .when(
+                F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id")
+            )
             .otherwise(F.lit(None)),
         )
         .withColumn(
@@ -65,10 +69,22 @@ def transform_fact_team_match_statistics(
             .when(F.col("match_result") == "loss", F.lit(0))
             .otherwise(F.lit(None)),
         )
-        .withColumn("win_flag", F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("draw_flag", F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("loss_flag", F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("clean_sheet_flag", F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)))
+        .withColumn(
+            "win_flag",
+            F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "draw_flag",
+            F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "loss_flag",
+            F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "clean_sheet_flag",
+            F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)),
+        )
         .select(
             F.col("s.match_id"),
             F.col("s.round"),

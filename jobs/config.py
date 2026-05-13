@@ -20,9 +20,7 @@ class AppConfig:
     silver_prefix: str = field(
         default_factory=lambda: os.getenv("SILVER_PREFIX", "silver")
     )
-    gold_prefix: str = field(
-        default_factory=lambda: os.getenv("GOLD_PREFIX", "gold")
-    )
+    gold_prefix: str = field(default_factory=lambda: os.getenv("GOLD_PREFIX", "gold"))
     seeds_path: str = field(
         default_factory=lambda: os.getenv("SEEDS_PATH", "data/seeds")
     )
