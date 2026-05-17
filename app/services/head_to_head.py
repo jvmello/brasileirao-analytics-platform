@@ -1,0 +1,72 @@
+from typing import Optional
+
+from app.db.session import get_connection
+
+
+def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    query = """
+        SELECT 
+            m.match_id,
+            m.season,
+            m.round,
+            m.match_date,
+            ht.id AS home_team_id,
+            ht.team_name AS home_team,
+            at.id AS away_team_id,
+            at.team_name AS away_team,
+            m.home_score,
+            m.away_score
+        FROM analytics.fact_matches m
+        JOIN analytics.dim_team ht 
+            ON ht.id = m.home_team_id
+        JOIN analytics.dim_team at 
+            ON at.id = m.away_team_id
+        WHERE 
+            (
+                (m.home_team_id = %s AND m.away_team_id = %s)
+                OR
+                (m.home_team_id = %s AND m.away_team_id = %s)
+            )
+    """
+
+    params = [
+        team1_id,
+        team2_id,
+        team2_id,
+        team1_id,
+    ]
+
+    if season is not None:
+        query += """
+            AND m.season = %s
+        """
+        params.append(season)
+
+    query += """
+        ORDER BY m.match_date DESC
+    """
+
+    cur.execute(query, params)
+    matches = cur.fetchall()
+
+    # resumo
+    summary = {"team1_wins": 0, "team2_wins": 0, "draws": 0}
+
+    for m in matches:
+        print(m)
+        if m["home_score"] == m["away_score"]:
+            summary["draws"] += 1
+        elif (m["home_team_id"] == team1_id and m["home_score"] > m["away_score"]) or (
+            m["away_team_id"] == team1_id and m["away_score"] > m["home_score"]
+        ):
+            summary["team1_wins"] += 1
+        else:
+            summary["team2_wins"] += 1
+
+    cur.close()
+    conn.close()
+
+    return {"summary": summary, "matches": matches}

@@ -68,24 +68,20 @@ def build_spark_session(app_name: str, config: AppConfig) -> SparkSession:
         .config("spark.hadoop.fs.s3a.secret.key", config.aws_secret_access_key)
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
-
         # credenciais
         .config(
             "spark.hadoop.fs.s3a.aws.credentials.provider",
             "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
         )
-
         # 👉 JARS (ESSENCIAL)
         .config(
             "spark.jars.packages",
-            "org.apache.hadoop:hadoop-aws:3.4.1,org.postgresql:postgresql:42.7.3"
+            "org.apache.hadoop:hadoop-aws:3.4.1,org.postgresql:postgresql:42.7.3",
         )
-
         # timeouts
         .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000")
         .config("spark.hadoop.fs.s3a.connection.timeout", "60000")
         .config("spark.hadoop.fs.s3a.connection.request.timeout", "60000")
-
         .getOrCreate()
     )
 

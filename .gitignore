@@ -1,5 +1,8 @@
 roadmap.md
-data/*
+data/campeonato-brasileiro*
+data/brasileirao*
+data/.*
+data/*.txt
 *__pycache__/*
 run_jupyter.txt
 .env
