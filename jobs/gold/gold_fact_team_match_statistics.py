@@ -48,12 +48,8 @@ def transform_fact_team_match_statistics(
         .join(matches.alias("m"), F.col("s.match_id") == F.col("m.match_id"), "left")
         .withColumn(
             "opponent_team_id",
-            F.when(
-                F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id")
-            )
-            .when(
-                F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id")
-            )
+            F.when(F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id"))
+            .when(F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id"))
             .otherwise(F.lit(None)),
         )
         .withColumn(
@@ -69,22 +65,10 @@ def transform_fact_team_match_statistics(
             .when(F.col("match_result") == "loss", F.lit(0))
             .otherwise(F.lit(None)),
         )
-        .withColumn(
-            "win_flag",
-            F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "draw_flag",
-            F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "loss_flag",
-            F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)),
-        )
-        .withColumn(
-            "clean_sheet_flag",
-            F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)),
-        )
+        .withColumn("win_flag", F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("draw_flag", F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("loss_flag", F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)))
+        .withColumn("clean_sheet_flag", F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)))
         .select(
             F.col("s.match_id"),
             F.col("s.round"),
@@ -176,6 +160,18 @@ def write_fact_team_match_statistics(df: DataFrame, config: AppConfig) -> None:
     path = f"s3a://{config.bucket_name}/{gold_prefix}/fact_team_match_statistics/"
     (df.write.mode("overwrite").partitionBy("season").parquet(path))
 
+def read_dim_team(spark: SparkSession, config: AppConfig) -> DataFrame:
+    gold_prefix = get_gold_prefix(config)
+    path = f"s3a://{config.bucket_name}/{gold_prefix}/dim_team/"
+
+    return spark.read.parquet(path)
+
+
+def read_fact_matches(spark: SparkSession, config: AppConfig) -> DataFrame:
+    gold_prefix = get_gold_prefix(config)
+    path = f"s3a://{config.bucket_name}/{gold_prefix}/fact_matches/"
+
+    return spark.read.parquet(path)
 
 def main() -> None:
     config = AppConfig()
@@ -183,18 +179,29 @@ def main() -> None:
 
     try:
         silver_stats = read_silver_match_statistics(spark, config)
+        dim_team = read_dim_team(spark, config)
+        fact_matches = read_fact_matches(spark, config)
 
         if silver_stats.limit(1).count() == 0:
-            raise ValueError("No silver match_statistics files found.")
+            raise ValueError("No silver team match statistics files found.")
 
-        fact_stats = transform_fact_team_match_statistics(silver_stats)
-        validate_fact_team_match_statistics(fact_stats)
-        write_fact_team_match_statistics(fact_stats, config)
+        if dim_team.limit(1).count() == 0:
+            raise ValueError("No gold dim_team files found.")
+
+        if fact_matches.limit(1).count() == 0:
+            raise ValueError("No gold fact_matches files found.")
+
+        fact_team_match_statistics = transform_fact_team_match_statistics(
+            df=silver_stats,
+            dim_team_df=dim_team,
+            fact_matches_df=fact_matches,
+        )
+
+        validate_fact_team_match_statistics(fact_team_match_statistics)
+        write_fact_team_match_statistics(fact_team_match_statistics, config)
 
         print("gold.fact_team_match_statistics successfully written.")
-        print(f"rows={fact_stats.count()}")
-        print(f"distinct_matches={fact_stats.select('match_id').distinct().count()}")
-        print(f"distinct_teams={fact_stats.select('team').distinct().count()}")
+        print(f"rows={fact_team_match_statistics.count()}")
 
     finally:
         spark.stop()

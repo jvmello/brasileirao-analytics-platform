@@ -1,5 +1,167 @@
-stadium_raw,stadium_name,city,state
-Beira Rio,Beira-Rio,Porto Alegre,RS
-Morumbi,Morumbi,São Paulo,SP
-Maracanã,Maracanã,Rio de Janeiro,RJ
-Arena do Gremio,Arena do Grêmio,Porto Alegre,RS
+stadium_name_key,stadium_name,city,state
+beira_rio,Beira-Rio,Porto Alegre,RS
+morumbi,Morumbi,São Paulo,SP
+maracana,Maracanã,Rio de Janeiro,RJ
+arena_do_gremio,Arena do Grêmio,Porto Alegre,RS
+allianz_parque,Allianz Parque,São Paulo,SP
+arena_mrv,Arena MRV,Belo Horizonte,MG
+estadio_joaquim_americo_guimaraes,Arena da Baixada,Curitiba,PR
+estadio_de_pituacu,Estádio de Pituaçu,Salvador,BA
+mineirao,Mineirão,Belo Horizonte,MG
+adelmar_da_costa_carvalho,Ilha do Retiro,Recife,PE
+arena_fonte_nova,Arena Fonte Nova,Salvador,BA
+estadio_urbano_caldeira,Vila Belmiro,Santos,SP
+nabizao,Nabizão,Bragança Paulista,SP
+morumbis,Morumbi,São Paulo,SP
+estadio_municipal_cicero_de_souza_marques,Estádio Municipal Cícero de Souza Marques,Bragança Paulista,SP
+estadio_presidente_vargas,Estádio Presidente Vargas,Fortaleza,CE
+neo_quimica_arena,Neo Química Arena,São Paulo,SP
+alfredo_jaconi,Alfredo Jaconi,Caxias do Sul,RS
+arena_castelao,Arena Castelão,Fortaleza,CE
+estadio_sao_januario,Estádio São Januário,Rio de Janeiro,RJ
+arena_conda,Arena Condá,Chapecó,SC
+estadio_jose_pinheiro_borda,Beira-Rio,Porto Alegre,RS
+estadio_beira_rio,Beira-Rio,Porto Alegre,RS
+arena_barueri,Arena Barueri,Barueri,SP
+estadio_municipal_general_raulino_de_oliveira,Raulino de Oliveira,Volta Redonda,RJ
+raulino_de_oliveira,Raulino de Oliveira,Volta Redonda,RJ
+estadio_nilton_santos,Estádio Nilton Santos,Rio de Janeiro,RJ
+engenhao,Estádio Nilton Santos,Rio de Janeiro,RJ
+olimpico_engenhao,Estádio Nilton Santos,Rio de Janeiro,RJ
+estadio_da_serrinha,Estádio Hailé Pinheiro,Goiânia,GO
+estadio_haile_pinheiro_serrinha,Estádio Hailé Pinheiro,Goiânia,GO
+itaipava_arena_fonte_nova,Arena Fonte Nova,Salvador,BA
+fonte_nova,Arena Fonte Nova,Salvador,BA
+couto_pereira,Couto Pereira,Curitiba,PR
+mane_garrincha,Mané Garrincha,Brasília,DF
+arena_brb_mane_garrincha,Mané Garrincha,Brasília,DF
+estadio_nacional_de_brasilia,Mané Garrincha,Brasília,DF
+arena_de_pernambuco,Arena de Pernambuco,São Lourenço da Mata,PE
+arena_pernambuco,Arena de Pernambuco,São Lourenço da Mata,PE
+estadio_parque_do_sabia,Parque do Sabiá,Uberlândia,MG
+estadio_municipal_parque_do_sabia,Parque do Sabiá,Uberlândia,MG
+parque_do_sabia,Parque do Sabiá,Uberlândia,MG
+estadio_do_governo_do_estado_de_goias_serra_dourada,Serra Dourada,Goiânia,GO
+estadio_serra_dourada,Serra Dourada,Goiânia,GO
+serra_dourada,Serra Dourada,Goiânia,GO
+campos_maia,Estádio José Maria de Campos Maia,Mirassol,SP
+estadio_raimundo_sampaio,Independência,Belo Horizonte,MG
+estadio_independencia,Independência,Belo Horizonte,MG
+independencia,Independência,Belo Horizonte,MG
+barradao,Barradão,Salvador,BA
+estadio_vasco_da_gama,São Januário,Rio de Janeiro,RJ
+sao_januario,São Januário,Rio de Janeiro,RJ
+arena_pantanal,Arena Pantanal,Cuiabá,MT
+estadio_antonio_accioly,Estádio Antônio Accioly,Goiânia,GO
+estadio_antonio_accioly_atletico_goianiense,Estádio Antônio Accioly,Goiânia,GO
+ligga_arena,Arena da Baixada,Curitiba,PR
+kyocera_arena,Arena da Baixada,Curitiba,PR
+arena_da_baixada,Arena da Baixada,Curitiba,PR
+estadio_brinco_de_ouro,Brinco de Ouro,Campinas,SP
+brinco_de_ouro,Brinco de Ouro,Campinas,SP
+kleber_andrade,Kléber Andrade,Cariacica,ES
+estadio_francisco_stedile_centenario,Centenário,Caxias do Sul,RS
+centenario_rs,Centenário,Caxias do Sul,RS
+orlando_scarpelli,Orlando Scarpelli,Florianópolis,SC
+ressacada,Ressacada,Florianópolis,SC
+estadio_heriberto_hulse,Heriberto Hülse,Criciúma,SC
+heriberto_hulse,Heriberto Hülse,Criciúma,SC
+moises_lucarelli,Moisés Lucarelli,Campinas,SP
+estadio_doutor_adhemar_de_barros,Fonte Luminosa,Araraquara,SP
+fonte_luminosa,Fonte Luminosa,Araraquara,SP
+helenao,Mário Helênio,Juiz de Fora,MG
+mario_helenio,Mário Helênio,Juiz de Fora,MG
+municipal_juiz_de_fora,Mário Helênio,Juiz de Fora,MG
+juiz_de_fora,Mário Helênio,Juiz de Fora,MG
+estadio_municipal_paulo_machado_de_carvalho,Pacaembu,São Paulo,SP
+pacaembu,Pacaembu,São Paulo,SP
+luso_brasileiro,Luso-Brasileiro,Rio de Janeiro,RJ
+estadio_alberto_oliveira,Jóia da Princesa,Feira de Santana,BA
+joia_da_princesa,Jóia da Princesa,Feira de Santana,BA
+vila_capanema,Vila Capanema,Curitiba,PR
+durival_de_brito,Vila Capanema,Curitiba,PR
+estadio_do_arruda,Arruda,Recife,PE
+arruda,Arruda,Recife,PE
+estadio_joaquim_henrique_nogueira_arena_do_jacare,Arena do Jacaré,Sete Lagoas,MG
+arena_do_jacare,Arena do Jacaré,Sete Lagoas,MG
+boca_do_jacare,Arena do Jacaré,Sete Lagoas,MG
+arena_das_dunas,Arena das Dunas,Natal,RN
+estadio_giulite_coutinho,Giulite Coutinho,Mesquita,RJ
+giulite_coutinho,Giulite Coutinho,Mesquita,RJ
+edson_passos,Giulite Coutinho,Mesquita,RJ
+estadio_do_cafe,Estádio do Café,Londrina,PR
+estadio_rei_pele,Rei Pelé,Maceió,AL
+arena_da_amazonia,Arena da Amazônia,Manaus,AM
+vivaldo_lima,Vivaldo Lima,Manaus,AM
+estadio_olimpico_pedro_ludovico_teixeira,Estádio Olímpico,Goiânia,GO
+arena_joinville,Arena Joinville,Joinville,SC
+castelao,Arena Castelão,Fortaleza,CE
+castelao_ce,Arena Castelão,Fortaleza,CE
+placido_castelo,Arena Castelão,Fortaleza,CE
+presidente_vargas,Estádio Presidente Vargas,Fortaleza,CE
+batistao,Batistão,Aracaju,SE
+estadio_ipatingao,Ipatingão,Ipatinga,MG
+ipatingao,Ipatingão,Ipatinga,MG
+willie_davids,Willie Davids,Maringá,PR
+estadio_willie_davids,Willie Davids,Maringá,PR
+santa_cruz,Estádio Santa Cruz,Ribeirão Preto,SP
+mangueirao,Mangueirão,Belém,PA
+pinheirao,Pinheirão,Curitiba,PR
+estadio_dr_oswaldo_teixeira_duarte,Canindé,São Paulo,SP
+caninde,Canindé,São Paulo,SP
+primeiro_de_maio_sao_bernardo_do_campo,Primeiro de Maio,São Bernardo do Campo,SP
+vila_belmiro,Vila Belmiro,Santos,SP
+estadio_paulo_constantino,Prudentão,Presidente Prudente,SP
+prudentao,Prudentão,Presidente Prudente,SP
+eduardo_jose_farah,Prudentão,Presidente Prudente,SP
+anacleto_campanella,Anacleto Campanella,São Caetano do Sul,SP
+moacyrzao,Moacyrzão,Macaé,RJ
+claudio_moacyr,Moacyrzão,Macaé,RJ
+benedito_teixeira,Teixeirão,São José do Rio Preto,SP
+teixeirao,Teixeirão,São José do Rio Preto,SP
+castelao_de_sao_luis,Castelão,São Luís,MA
+estadio_municipal_juscelino_kubitschek,Estádio Municipal Juscelino Kubitschek,Itumbiara,GO
+juscelino_kubitscheck,Estádio Municipal Juscelino Kubitschek,Itumbiara,GO
+olimpico,Olímpico Monumental,Porto Alegre,RS
+pedro_pedrossian,Morenão,Campo Grande,MS
+morenao,Morenão,Campo Grande,MS
+mj_jose_levi_sobrinho,Romildão,Mogi Mirim,SP
+romildao,Romildão,Mogi Mirim,SP
+romildo_ferreira,Romildão,Mogi Mirim,SP
+caio_martins,Caio Martins,Niterói,RJ
+bento_freitas,Bento Freitas,Pelotas,RS
+colosso_da_lagoa,Colosso da Lagoa,Erechim,RS
+parque_antartica,Parque Antártica,São Paulo,SP
+palestra_italia,Palestra Itália,São Paulo,SP
+wilson_de_barros,Wilson de Barros,Mogi Mirim,SP
+vila_olimpica,Vila Olímpica,Curitiba,PR
+bruno_j_daniel,Bruno José Daniel,Santo André,SP
+bruno_jose_daniel,Bruno José Daniel,Santo André,SP
+serejao,Serejão,Taguatinga,DF
+estadio_do_vale,Estádio do Vale,Novo Hamburgo,RS
+aflitos,Aflitos,Recife,PE
+pituacu,Estádio de Pituaçu,Salvador,BA
+novelli_junior,Novelli Júnior,Itu,SP
+olimpico_regional,Olímpico Regional,Cascavel,PR
+ilha_do_retiro,Ilha do Retiro,Recife,PE
+luiz_lacerda,Luiz Lacerda,Caruaru,PE
+machadao,Machadão,Natal,RN
+engenheiro_araripe,Engenheiro Araripe,Cariacica,ES
+bezerrao,Bezerrão,Gama,DF
+antonio_guimaraes,Estádio Antônio Guimarães,Santa Bárbara d'Oeste,SP
+melao,Melão,Varginha,MG
+a_campanella,Anacleto Campanella,São Caetano do Sul,SP
+centenario,Centenário,Caxias do Sul,RS
+curuzu,Curuzu,Belém,PA
+g_coutinho,Giulite Coutinho,Mesquita,RJ
+papa_j_paulo_ii,Romildão,Mogi Mirim,SP
+pres_vargas,Estádio Presidente Vargas,Fortaleza,CE
+r_de_oliveira,Raulino de Oliveira,Volta Redonda,RJ
+luso_brasileiro,Luso-Brasileiro,Rio de Janeiro,RJ
+couto_pereira,Couto Pereira,Curitiba,PR
+wilson_de_barros,Wilson de Barros,Mogi Mirim,SP
+pacaembu,Pacaembu,São Paulo,SP
+independencia,Independência,Belo Horizonte,MG
+parque_antartica,Parque Antártica,São Paulo,SP
+centenario,Centenário,Caxias do Sul,RS
+durival_de_brito,Vila Capanema,Curitiba,PR
