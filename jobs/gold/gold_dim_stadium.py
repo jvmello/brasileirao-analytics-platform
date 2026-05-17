@@ -181,16 +181,27 @@ def transform_dim_stadium(
         )
     )
 
-    validate_dim_stadium(mapped)
+    deduplicated = (
+        mapped
+        .groupBy("stadium_name_key")
+        .agg(
+            F.first("stadium_raw", ignorenulls=True).alias("stadium_raw"),
+            F.first("stadium_clean", ignorenulls=True).alias("stadium_clean"),
+            F.first("stadium_name", ignorenulls=True).alias("stadium_name"),
+            F.first("city", ignorenulls=True).alias("city"),
+            F.first("state", ignorenulls=True).alias("state"),
+        )
+    )
 
-    window = Window.orderBy("stadium_name_key", "stadium_raw")
+    window = Window.orderBy("stadium_name_key")
 
     return (
-        mapped
-        .withColumn("id", F.dense_rank().over(window).cast("long"))
+        deduplicated
+        .withColumn("id", F.row_number().over(window).cast("long"))
         .select(
             "id",
             "stadium_raw",
+            "stadium_clean",
             "stadium_name_key",
             "stadium_name",
             "city",
