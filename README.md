@@ -90,7 +90,6 @@ brasileirao-analytics-platform/
 │       ├── team_mapping.csv
 │       └── stadium_mapping.csv
 │
-├── transformations/
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
@@ -382,10 +381,7 @@ python -m pip install -r requirements.txt
 ### 3. Run Bronze jobs
 
 ```bash
-python -m jobs.bronze.bronze_matches
-python -m jobs.bronze.bronze_goals
-python -m jobs.bronze.bronze_cards
-python -m jobs.bronze.bronze_team_match_statistics
+python -m jobs.bronze.load_bronze_all
 ```
 
 ---
@@ -396,7 +392,7 @@ python -m jobs.bronze.bronze_team_match_statistics
 python -m jobs.silver.silver_matches
 python -m jobs.silver.silver_goals
 python -m jobs.silver.silver_cards
-python -m jobs.silver.silver_team_match_statistics
+python -m jobs.silver.silver_match_statistics
 ```
 
 ---
