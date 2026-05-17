@@ -72,11 +72,9 @@ def transform_fact_goals(
             F.col("g.match_date"),
             F.col("t.team_id"),
             F.col("p.player_id"),
-
             # Temporary raw columns. Remove later after API/marts are adjusted.
             F.col("g.team"),
             F.col("g.player"),
-
             F.col("g.minute_raw"),
             F.col("g.minute_base"),
             F.col("g.stoppage_minute"),
@@ -97,7 +95,9 @@ def validate_fact_goals(df: DataFrame) -> None:
     checks.append(
         (
             "unmapped_player_id",
-            df.filter(F.col("player").isNotNull() & F.col("player_id").isNull()).count(),
+            df.filter(
+                F.col("player").isNotNull() & F.col("player_id").isNull()
+            ).count(),
         )
     )
     checks.append(("null_season", df.filter(F.col("season").isNull()).count()))

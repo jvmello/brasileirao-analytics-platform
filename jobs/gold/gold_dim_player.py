@@ -54,8 +54,7 @@ def transform_dim_player(
     )
 
     players = (
-        goal_players
-        .unionByName(card_players)
+        goal_players.unionByName(card_players)
         .filter(F.col("player_name_raw").isNotNull())
         .filter(F.col("player_name_raw") != "")
         .dropDuplicates(["player_name_raw"])
@@ -64,8 +63,7 @@ def transform_dim_player(
     window = Window.orderBy("player_name_raw")
 
     return (
-        players
-        .withColumn("id", F.dense_rank().over(window).cast("long"))
+        players.withColumn("id", F.dense_rank().over(window).cast("long"))
         .withColumn("player_name", F.col("player_name_raw"))
         .withColumn("player_key", build_player_key("player_name_raw"))
         .select(

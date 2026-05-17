@@ -48,8 +48,12 @@ def transform_fact_team_match_statistics(
         .join(matches.alias("m"), F.col("s.match_id") == F.col("m.match_id"), "left")
         .withColumn(
             "opponent_team_id",
-            F.when(F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id"))
-            .when(F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id"))
+            F.when(
+                F.col("t.team_id") == F.col("m.home_team_id"), F.col("m.away_team_id")
+            )
+            .when(
+                F.col("t.team_id") == F.col("m.away_team_id"), F.col("m.home_team_id")
+            )
             .otherwise(F.lit(None)),
         )
         .withColumn(
@@ -65,10 +69,22 @@ def transform_fact_team_match_statistics(
             .when(F.col("match_result") == "loss", F.lit(0))
             .otherwise(F.lit(None)),
         )
-        .withColumn("win_flag", F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("draw_flag", F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("loss_flag", F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)))
-        .withColumn("clean_sheet_flag", F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)))
+        .withColumn(
+            "win_flag",
+            F.when(F.col("match_result") == "win", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "draw_flag",
+            F.when(F.col("match_result") == "draw", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "loss_flag",
+            F.when(F.col("match_result") == "loss", F.lit(1)).otherwise(F.lit(0)),
+        )
+        .withColumn(
+            "clean_sheet_flag",
+            F.when(F.col("goals_conceded") == 0, F.lit(1)).otherwise(F.lit(0)),
+        )
         .select(
             F.col("s.match_id"),
             F.col("s.round"),
@@ -160,6 +176,7 @@ def write_fact_team_match_statistics(df: DataFrame, config: AppConfig) -> None:
     path = f"s3a://{config.bucket_name}/{gold_prefix}/fact_team_match_statistics/"
     (df.write.mode("overwrite").partitionBy("season").parquet(path))
 
+
 def read_dim_team(spark: SparkSession, config: AppConfig) -> DataFrame:
     gold_prefix = get_gold_prefix(config)
     path = f"s3a://{config.bucket_name}/{gold_prefix}/dim_team/"
@@ -172,6 +189,7 @@ def read_fact_matches(spark: SparkSession, config: AppConfig) -> DataFrame:
     path = f"s3a://{config.bucket_name}/{gold_prefix}/fact_matches/"
 
     return spark.read.parquet(path)
+
 
 def main() -> None:
     config = AppConfig()

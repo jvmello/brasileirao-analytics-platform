@@ -14,7 +14,7 @@ def clean_stadium_raw(column_name: str) -> F.Column:
     cleaned = F.col(column_name)
 
     # Replace non-breaking spaces with normal spaces
-    cleaned = F.regexp_replace(cleaned, "\u00A0", " ")
+    cleaned = F.regexp_replace(cleaned, "\u00a0", " ")
 
     # Trim normal spaces
     cleaned = F.trim(cleaned)
@@ -31,6 +31,7 @@ def clean_stadium_raw(column_name: str) -> F.Column:
 
     return F.trim(cleaned)
 
+
 def remove_accents(column: F.Column) -> F.Column:
     accented = "áàãâäéèêëíìîïóòõôöúùûüçñÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇÑ"
     unaccented = "aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN"
@@ -46,6 +47,7 @@ def build_text_key(column_name: str) -> F.Column:
     cleaned = F.regexp_replace(cleaned, r"(^_+|_+$)", "")
 
     return cleaned
+
 
 def get_silver_prefix(config: AppConfig) -> str:
     return getattr(
@@ -76,12 +78,12 @@ def read_stadium_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
         )
     )
 
+
 def read_stadium_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
     path = f"{config.seeds_path.rstrip('/')}/stadium_mapping.csv"
 
     return (
-        spark.read
-        .option("header", "true")
+        spark.read.option("header", "true")
         .csv(path)
         .select(
             F.trim(F.col("stadium_name_key")).alias("stadium_name_key"),
@@ -91,11 +93,9 @@ def read_stadium_mapping(spark: SparkSession, config: AppConfig) -> DataFrame:
         )
     )
 
+
 def validate_dim_stadium(df: DataFrame) -> None:
-    missing_location = df.filter(
-        F.col("city").isNull()
-        | F.col("state").isNull()
-    )
+    missing_location = df.filter(F.col("city").isNull() | F.col("state").isNull())
 
     if missing_location.count() > 0:
         missing_location.select(
@@ -112,13 +112,13 @@ def validate_dim_stadium(df: DataFrame) -> None:
 
         raise ValueError("There are stadiums without city or state.")
 
+
 def transform_dim_stadium(
     matches_df: DataFrame,
     stadium_mapping_df: DataFrame,
 ) -> DataFrame:
     stadiums = (
-        matches_df
-        .select(F.trim(F.col("stadium")).alias("stadium_raw"))
+        matches_df.select(F.trim(F.col("stadium")).alias("stadium_raw"))
         .filter(F.col("stadium_raw").isNotNull())
         .filter(F.col("stadium_raw") != "")
         .withColumn("stadium_clean", clean_stadium_raw("stadium_raw"))
@@ -126,88 +126,63 @@ def transform_dim_stadium(
     )
 
     parsed = (
-        stadiums
-        .withColumn(
-            "stadium_parts",
-            F.split(F.col("stadium_clean"), r"\s*,\s*")
+        stadiums.withColumn(
+            "stadium_parts", F.split(F.col("stadium_clean"), r"\s*,\s*")
         )
         .withColumn(
-            "stadium_name_extracted",
-            F.trim(F.element_at(F.col("stadium_parts"), 1))
+            "stadium_name_extracted", F.trim(F.element_at(F.col("stadium_parts"), 1))
         )
         .withColumn(
             "city_extracted",
             F.when(
                 F.size(F.col("stadium_parts")) >= 2,
-                F.trim(F.element_at(F.col("stadium_parts"), 2))
-            ).otherwise(F.lit(None))
+                F.trim(F.element_at(F.col("stadium_parts"), 2)),
+            ).otherwise(F.lit(None)),
         )
         .withColumn(
             "state_extracted",
             F.when(
                 F.size(F.col("stadium_parts")) >= 3,
-                F.trim(F.element_at(F.col("stadium_parts"), 3))
-            ).otherwise(F.lit(None))
+                F.trim(F.element_at(F.col("stadium_parts"), 3)),
+            ).otherwise(F.lit(None)),
         )
-        .withColumn(
-            "stadium_name_key",
-            build_text_key("stadium_name_extracted")
-        )
+        .withColumn("stadium_name_key", build_text_key("stadium_name_extracted"))
     )
 
     mapped = (
-        parsed
-        .join(stadium_mapping_df, on="stadium_name_key", how="left")
+        parsed.join(stadium_mapping_df, on="stadium_name_key", how="left")
         .withColumn(
             "stadium_name",
-            F.coalesce(
-                F.col("mapped_stadium_name"),
-                F.col("stadium_name_extracted")
-            )
+            F.coalesce(F.col("mapped_stadium_name"), F.col("stadium_name_extracted")),
         )
+        .withColumn("city", F.coalesce(F.col("city_extracted"), F.col("mapped_city")))
         .withColumn(
-            "city",
-            F.coalesce(
-                F.col("city_extracted"),
-                F.col("mapped_city")
-            )
-        )
-        .withColumn(
-            "state",
-            F.coalesce(
-                F.col("state_extracted"),
-                F.col("mapped_state")
-            )
+            "state", F.coalesce(F.col("state_extracted"), F.col("mapped_state"))
         )
     )
 
-    deduplicated = (
-        mapped
-        .groupBy("stadium_name_key")
-        .agg(
-            F.first("stadium_raw", ignorenulls=True).alias("stadium_raw"),
-            F.first("stadium_clean", ignorenulls=True).alias("stadium_clean"),
-            F.first("stadium_name", ignorenulls=True).alias("stadium_name"),
-            F.first("city", ignorenulls=True).alias("city"),
-            F.first("state", ignorenulls=True).alias("state"),
-        )
+    deduplicated = mapped.groupBy("stadium_name_key").agg(
+        F.first("stadium_raw", ignorenulls=True).alias("stadium_raw"),
+        F.first("stadium_clean", ignorenulls=True).alias("stadium_clean"),
+        F.first("stadium_name", ignorenulls=True).alias("stadium_name"),
+        F.first("city", ignorenulls=True).alias("city"),
+        F.first("state", ignorenulls=True).alias("state"),
     )
 
     window = Window.orderBy("stadium_name_key")
 
-    return (
-        deduplicated
-        .withColumn("id", F.row_number().over(window).cast("long"))
-        .select(
-            "id",
-            "stadium_raw",
-            "stadium_clean",
-            "stadium_name_key",
-            "stadium_name",
-            "city",
-            "state",
-        )
+    return deduplicated.withColumn(
+        "id", F.row_number().over(window).cast("long")
+    ).select(
+        "id",
+        "stadium_raw",
+        "stadium_clean",
+        "stadium_name_key",
+        "stadium_name",
+        "city",
+        "state",
     )
+
 
 def write_dim_stadium(df: DataFrame, config: AppConfig) -> None:
     path = f"s3a://{config.bucket_name}/{get_gold_prefix(config)}/dim_stadium/"

@@ -11,26 +11,29 @@ def get_standings(season: int, round: int | None = None):
 
     query = f"""
         SELECT
-            team_id,
-            team,
-            COUNT(*) AS matches,
-            SUM(win_flag) AS wins,
-            SUM(draw_flag) AS draws,
-            SUM(loss_flag) AS losses,
-            SUM(goals_scored) AS goals_for,
-            SUM(goals_conceded) AS goals_against,
-            SUM(goals_scored) - SUM(goals_conceded) AS goal_difference,
-            SUM(match_points) AS points
-        FROM analytics.fact_team_match_statistics
-        WHERE season = %s
-        {round_filter}
-        GROUP BY team_id, team
+            s.team_id,
+            t.team_name,
+            COUNT(*) AS matches_played,
+            SUM(s.win_flag) AS wins,
+            SUM(s.draw_flag) AS draws,
+            SUM(s.loss_flag) AS losses,
+            SUM(s.goals_scored) AS goals_for,
+            SUM(s.goals_conceded) AS goals_against,
+            SUM(s.goals_scored - s.goals_conceded) AS goal_difference,
+            SUM(s.match_points) AS points
+        FROM analytics.fact_team_match_statistics s
+        JOIN analytics.dim_team t
+            ON t.id = s.team_id
+        WHERE s.season = %s {round_filter}
+        GROUP BY
+            s.team_id,
+            t.team_name
         ORDER BY
             points DESC,
             wins DESC,
             goal_difference DESC,
             goals_for DESC,
-            team ASC
+            team_name ASC
     """
 
     with get_connection() as conn:

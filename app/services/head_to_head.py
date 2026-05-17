@@ -8,24 +8,28 @@ def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None)
     cur = conn.cursor()
 
     query = """
-    SELECT 
-        m.match_id,
-        m.match_date,
-        ht.team_id as home_team_id,
-        ht.team_name as home_team,
-        at.team_id as away_team_id,
-        at.team_name as away_team,
-        m.home_score,
-        m.away_score
-    FROM analytics.fact_matches m
-    JOIN analytics.dim_team ht ON m.home_team_id = ht.team_id
-    JOIN analytics.dim_team at ON m.away_team_id = at.team_id
-    WHERE 
-        (
-            (m.home_team_id = %s AND m.away_team_id = %s)
-            OR
-            (m.home_team_id = %s AND m.away_team_id = %s)
-        )
+        SELECT 
+            m.match_id,
+            m.season,
+            m.round,
+            m.match_date,
+            ht.id AS home_team_id,
+            ht.team_name AS home_team,
+            at.id AS away_team_id,
+            at.team_name AS away_team,
+            m.home_score,
+            m.away_score
+        FROM analytics.fact_matches m
+        JOIN analytics.dim_team ht 
+            ON ht.id = m.home_team_id
+        JOIN analytics.dim_team at 
+            ON at.id = m.away_team_id
+        WHERE 
+            (
+                (m.home_team_id = %s AND m.away_team_id = %s)
+                OR
+                (m.home_team_id = %s AND m.away_team_id = %s)
+            )
     """
 
     params = [
@@ -52,6 +56,7 @@ def get_head_to_head(team1_id: int, team2_id: int, season: Optional[int] = None)
     summary = {"team1_wins": 0, "team2_wins": 0, "draws": 0}
 
     for m in matches:
+        print(m)
         if m["home_score"] == m["away_score"]:
             summary["draws"] += 1
         elif (m["home_team_id"] == team1_id and m["home_score"] > m["away_score"]) or (

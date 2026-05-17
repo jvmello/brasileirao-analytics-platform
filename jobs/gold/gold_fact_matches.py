@@ -42,7 +42,7 @@ def read_dim_stadium(spark: SparkSession, config: AppConfig) -> DataFrame:
 
 
 def clean_text(column_name: str) -> F.Column:
-    cleaned = F.regexp_replace(F.col(column_name).cast("string"), "\u00A0", " ")
+    cleaned = F.regexp_replace(F.col(column_name).cast("string"), "\u00a0", " ")
     cleaned = F.regexp_replace(cleaned, r"\s+", " ")
     cleaned = F.trim(cleaned)
 
@@ -50,7 +50,7 @@ def clean_text(column_name: str) -> F.Column:
 
 
 def clean_stadium_raw(column_name: str) -> F.Column:
-    cleaned = F.regexp_replace(F.col(column_name).cast("string"), "\u00A0", " ")
+    cleaned = F.regexp_replace(F.col(column_name).cast("string"), "\u00a0", " ")
     cleaned = F.trim(cleaned)
 
     # Remove markers like:
@@ -89,8 +89,7 @@ def build_text_key(column_name: str) -> F.Column:
 
 def prepare_matches(silver_matches_df: DataFrame) -> DataFrame:
     return (
-        silver_matches_df
-        .withColumn("home_team_raw", clean_text("home_team"))
+        silver_matches_df.withColumn("home_team_raw", clean_text("home_team"))
         .withColumn("away_team_raw", clean_text("away_team"))
         .withColumn("stadium_raw", clean_text("stadium"))
         .withColumn("stadium_clean", clean_stadium_raw("stadium"))
@@ -111,8 +110,7 @@ def prepare_matches(silver_matches_df: DataFrame) -> DataFrame:
 
 def prepare_dim_team(dim_team_df: DataFrame) -> DataFrame:
     return (
-        dim_team_df
-        .select(
+        dim_team_df.select(
             F.col("id").alias("team_id"),
             clean_text("team_name_raw").alias("team_name_raw"),
         )
@@ -123,8 +121,7 @@ def prepare_dim_team(dim_team_df: DataFrame) -> DataFrame:
 
 def prepare_dim_stadium(dim_stadium_df: DataFrame) -> DataFrame:
     return (
-        dim_stadium_df
-        .select(
+        dim_stadium_df.select(
             F.col("id").alias("stadium_id"),
             F.col("stadium_name_key"),
         )
@@ -143,29 +140,20 @@ def transform_fact_matches(
 
     teams = prepare_dim_team(dim_team_df)
 
-    home_teams = (
-        teams
-        .select(
-            F.col("team_id").alias("home_team_id"),
-            F.col("team_name_raw").alias("home_team_raw_dim"),
-        )
-        .alias("ht")
-    )
+    home_teams = teams.select(
+        F.col("team_id").alias("home_team_id"),
+        F.col("team_name_raw").alias("home_team_raw_dim"),
+    ).alias("ht")
 
-    away_teams = (
-        teams
-        .select(
-            F.col("team_id").alias("away_team_id"),
-            F.col("team_name_raw").alias("away_team_raw_dim"),
-        )
-        .alias("at")
-    )
+    away_teams = teams.select(
+        F.col("team_id").alias("away_team_id"),
+        F.col("team_name_raw").alias("away_team_raw_dim"),
+    ).alias("at")
 
     stadiums = prepare_dim_stadium(dim_stadium_df).alias("s")
 
     joined = (
-        matches
-        .join(
+        matches.join(
             home_teams,
             F.col("m.home_team_raw") == F.col("ht.home_team_raw_dim"),
             "left",
@@ -183,26 +171,22 @@ def transform_fact_matches(
     )
 
     return (
-        joined
-        .select(
+        joined.select(
             F.col("m.match_id"),
             F.col("m.round"),
             F.col("m.match_date"),
             F.col("m.match_time"),
             F.col("m.match_datetime"),
             F.col("m.season"),
-
             F.col("ht.home_team_id"),
             F.col("at.away_team_id"),
             F.col("s.stadium_id"),
-
             # Temporary debug columns. Remove later after all joins are stable.
             F.col("m.home_team_raw").alias("home_team"),
             F.col("m.away_team_raw").alias("away_team"),
             F.col("m.stadium_raw").alias("stadium"),
             F.col("m.stadium_clean"),
             F.col("m.stadium_name_key"),
-
             F.col("m.home_formation"),
             F.col("m.away_formation"),
             F.col("m.home_coach"),
@@ -250,8 +234,7 @@ def transform_fact_matches(
 
 def show_invalid_foreign_keys(df: DataFrame) -> None:
     null_team_ids = df.filter(
-        F.col("home_team_id").isNull()
-        | F.col("away_team_id").isNull()
+        F.col("home_team_id").isNull() | F.col("away_team_id").isNull()
     )
 
     if null_team_ids.count() > 0:
@@ -309,8 +292,12 @@ def validate_fact_matches(df: DataFrame) -> None:
     checks.append(("null_match_date", df.filter(F.col("match_date").isNull()).count()))
     checks.append(("null_season", df.filter(F.col("season").isNull()).count()))
 
-    checks.append(("null_home_team_id", df.filter(F.col("home_team_id").isNull()).count()))
-    checks.append(("null_away_team_id", df.filter(F.col("away_team_id").isNull()).count()))
+    checks.append(
+        ("null_home_team_id", df.filter(F.col("home_team_id").isNull()).count())
+    )
+    checks.append(
+        ("null_away_team_id", df.filter(F.col("away_team_id").isNull()).count())
+    )
     checks.append(("null_stadium_id", df.filter(F.col("stadium_id").isNull()).count()))
 
     checks.append(

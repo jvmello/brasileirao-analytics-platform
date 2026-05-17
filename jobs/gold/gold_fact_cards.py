@@ -72,11 +72,9 @@ def transform_fact_cards(
             F.col("c.match_date"),
             F.col("t.team_id"),
             F.col("p.player_id"),
-
             # Temporary raw columns. Remove later after API/marts are adjusted.
             F.col("c.team"),
             F.col("c.player"),
-
             F.col("c.shirt_number"),
             F.col("c.position"),
             F.col("c.minute_raw"),
@@ -100,7 +98,9 @@ def validate_fact_cards(df: DataFrame) -> None:
     checks.append(
         (
             "unmapped_player_id",
-            df.filter(F.col("player").isNotNull() & F.col("player_id").isNull()).count(),
+            df.filter(
+                F.col("player").isNotNull() & F.col("player_id").isNull()
+            ).count(),
         )
     )
     checks.append(("null_season", df.filter(F.col("season").isNull()).count()))

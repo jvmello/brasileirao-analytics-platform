@@ -11,16 +11,22 @@ def get_round_matches(season: int, round: int):
                     m.season,
                     m.round,
                     m.match_date,
-                    m.stadium,
                     ht.team_name AS home_team,
                     at.team_name AS away_team,
                     m.home_score,
-                    m.away_score
+                    m.away_score,
+                    s.stadium_name,
+                    s.city AS stadium_city,
+                    s.state AS stadium_state
                 FROM analytics.fact_matches m
-                JOIN analytics.dim_team ht ON ht.team_id = m.home_team_id
-                JOIN analytics.dim_team at ON at.team_id = m.away_team_id
+                JOIN analytics.dim_team ht
+                    ON ht.id = m.home_team_id
+                JOIN analytics.dim_team at
+                    ON at.id = m.away_team_id
+                LEFT JOIN analytics.dim_stadium s
+                    ON s.id = m.stadium_id
                 WHERE m.season = %s
-                  AND m.round = %s
+                AND m.round = %s
                 ORDER BY m.match_date, m.match_id
             """,
                 (season, round),
