@@ -5,6 +5,8 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from i18n import t, translate_columns
+
 
 def show_page_header(title: str, description: str | None = None) -> None:
     st.title(title)
@@ -14,7 +16,7 @@ def show_page_header(title: str, description: str | None = None) -> None:
 
 
 def show_api_error(error: Exception) -> None:
-    st.error("Could not load data from the API.")
+    st.error(t("api_error"))
     st.exception(error)
 
 
@@ -73,12 +75,16 @@ def select_team(
     )
 
 
-def show_dataframe(df: pd.DataFrame, empty_message: str = "No data found.") -> None:
+def show_dataframe(df: pd.DataFrame, empty_message: str | None = None) -> None:
     if df.empty:
-        st.info(empty_message)
+        st.info(empty_message or t("no_data"))
         return
 
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(
+        translate_columns(df),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 def metric_value(value: Any) -> str:

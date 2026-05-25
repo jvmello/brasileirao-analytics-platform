@@ -1,6 +1,7 @@
 import streamlit as st
 
 from api_client import ApiClientError, get_head_to_head, get_standings
+from i18n import language_selector, t
 from ui import (
     get_team_options_from_standings,
     records_to_dataframe,
@@ -17,16 +18,20 @@ st.set_page_config(
     layout="wide",
 )
 
+language_selector()
+
 show_page_header(
-    "⚔️ Head-to-Head",
-    "Compare historical matches between two teams.",
+    f"⚔️ {t('head_to_head')}",
+    "Compare historical matches between two teams."
+    if st.session_state["language"] == "en"
+    else "Compare o histórico de partidas entre dois times.",
 )
 
 with st.sidebar:
-    st.header("Filters")
+    st.header(t("filters"))
 
     season = st.number_input(
-        "Season",
+        t("season"),
         min_value=2003,
         max_value=2026,
         value=2024,
@@ -34,7 +39,7 @@ with st.sidebar:
     )
 
     reference_round = st.number_input(
-        "Reference round for team selector",
+        t("reference_round"),
         min_value=1,
         max_value=38,
         value=38,
@@ -42,7 +47,7 @@ with st.sidebar:
     )
 
     use_season_filter = st.checkbox(
-        "Filter head-to-head by season",
+        t("filter_by_season"),
         value=True,
     )
 
@@ -56,19 +61,19 @@ try:
 
     with st.sidebar:
         team1_id = select_team(
-            label="Team 1",
+            label=t("team_1"),
             team_options=team_options,
             fallback_key="h2h_team1_id",
         )
 
         team2_id = select_team(
-            label="Team 2",
+            label=t("team_2"),
             team_options=team_options,
             fallback_key="h2h_team2_id",
         )
 
     if team1_id == team2_id:
-        st.warning("Select two different teams.")
+        st.warning(t("different_teams_warning"))
         st.stop()
 
     data = get_head_to_head(
@@ -78,17 +83,17 @@ try:
     )
 
     if not data:
-        st.info("No head-to-head data found.")
+        st.info(t("no_h2h"))
         st.stop()
 
-    st.subheader("Head-to-Head Results")
+    st.subheader(t("head_to_head_results"))
 
     if isinstance(data, dict):
         summary = data.get("summary")
         matches = data.get("matches") or data.get("data") or data.get("results")
 
         if summary:
-            st.subheader("Summary")
+            st.subheader(t("summary"))
             st.json(summary)
 
         if matches:

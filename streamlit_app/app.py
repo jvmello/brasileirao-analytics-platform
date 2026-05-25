@@ -1,6 +1,7 @@
 import streamlit as st
 
 from api_client import API_BASE_URL
+from i18n import language_selector, t
 
 
 st.set_page_config(
@@ -9,16 +10,10 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("⚽ Brasileirão Analytics Platform")
+language_selector()
 
-st.markdown(
-    """
-    Welcome to the Brasileirão Analytics dashboard.
-
-    This Streamlit application consumes the FastAPI backend and displays curated
-    football analytics from the PostgreSQL serving layer.
-    """
-)
+st.title(f"⚽ {t('app_title')}")
+st.caption(t("app_description"))
 
 st.divider()
 
@@ -43,20 +38,5 @@ Streamlit
     language="text",
 )
 
-st.subheader("Current API")
-
+st.subheader("API")
 st.write(f"API Base URL: `{API_BASE_URL}`")
-
-st.subheader("Available pages")
-
-st.markdown(
-    """
-    - **Standings**: league table by season and round
-    - **Rounds**: matches from a specific round
-    - **Team Dashboard**: team-level summary, recent matches, scorers and discipline
-    - **Match Details**: match-level details
-    - **Head-to-Head**: historical comparison between two teams
-    """
-)
-
-st.info("Use the sidebar navigation to open a dashboard page.")

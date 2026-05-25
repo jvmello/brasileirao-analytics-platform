@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from api_client import ApiClientError, get_standings, get_team_dashboard
+from i18n import language_selector, t
 from ui import (
     get_team_options_from_standings,
     metric_value,
@@ -19,16 +20,20 @@ st.set_page_config(
     layout="wide",
 )
 
+language_selector()
+
 show_page_header(
-    "📊 Team Dashboard",
-    "Season summary, home and away performance, recent matches, scorers and discipline.",
+    f"📊 {t('team_dashboard')}",
+    "Season summary, home and away performance, recent matches, scorers and discipline."
+    if st.session_state["language"] == "en"
+    else "Resumo da temporada, desempenho como mandante e visitante, partidas recentes, artilheiros e disciplina.",
 )
 
 with st.sidebar:
-    st.header("Filters")
+    st.header(t("filters"))
 
     season = st.number_input(
-        "Season",
+        t("season"),
         min_value=2003,
         max_value=2026,
         value=2024,
@@ -36,7 +41,7 @@ with st.sidebar:
     )
 
     reference_round = st.number_input(
-        "Reference round for team selector",
+        t("reference_round"),
         min_value=1,
         max_value=38,
         value=38,
@@ -53,7 +58,7 @@ try:
 
     with st.sidebar:
         team_id = select_team(
-            label="Team",
+            label=t("team"),
             team_options=team_options,
             fallback_key="team_dashboard_team_id",
         )
@@ -64,7 +69,7 @@ try:
     )
 
     if not dashboard:
-        st.info("No dashboard data found for the selected team and season.")
+        st.info(t("no_dashboard"))
         st.stop()
 
     team = dashboard.get("team", {})
@@ -74,24 +79,24 @@ try:
     top_scorers = dashboard.get("top_scorers", []) or []
     discipline = dashboard.get("discipline", {}) or {}
 
-    st.subheader(f"{team.get('name', 'Team')} - {season}")
+    st.subheader(f"{team.get('name', t('team'))} - {season}")
 
     cols = st.columns(5)
 
-    cols[0].metric("Points", metric_value(summary.get("points")))
-    cols[1].metric("Matches", metric_value(summary.get("matches_played")))
-    cols[2].metric("Wins", metric_value(summary.get("wins")))
-    cols[3].metric("Goal Difference", metric_value(summary.get("goal_difference")))
-    cols[4].metric("Clean Sheets", metric_value(summary.get("clean_sheets")))
+    cols[0].metric(t("points"), metric_value(summary.get("points")))
+    cols[1].metric(t("matches"), metric_value(summary.get("matches_played")))
+    cols[2].metric(t("wins"), metric_value(summary.get("wins")))
+    cols[3].metric(t("goal_difference"), metric_value(summary.get("goal_difference")))
+    cols[4].metric(t("clean_sheets"), metric_value(summary.get("clean_sheets")))
 
     st.divider()
 
-    st.subheader("Season Summary")
+    st.subheader(t("season_summary"))
 
     summary_df = pd.DataFrame([summary])
     show_dataframe(summary_df)
 
-    st.subheader("Home vs Away")
+    st.subheader(t("home_away"))
 
     home_away_df = records_to_dataframe(home_away)
     show_dataframe(home_away_df)
@@ -100,12 +105,12 @@ try:
         chart_df = home_away_df[["match_side", "points"]].set_index("match_side")
         st.bar_chart(chart_df)
 
-    st.subheader("Recent Matches")
+    st.subheader(t("recent_matches"))
 
     recent_matches_df = records_to_dataframe(recent_matches)
     show_dataframe(recent_matches_df)
 
-    st.subheader("Top Scorers")
+    st.subheader(t("top_scorers"))
 
     top_scorers_df = records_to_dataframe(top_scorers)
     show_dataframe(top_scorers_df)
@@ -119,7 +124,7 @@ try:
 
         st.bar_chart(chart_df)
 
-    st.subheader("Discipline")
+    st.subheader(t("discipline"))
 
     discipline_df = pd.DataFrame([discipline]) if discipline else pd.DataFrame()
     show_dataframe(discipline_df)
