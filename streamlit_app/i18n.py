@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-
 TRANSLATIONS = {
     "en": {
         "language": "Language",
@@ -182,9 +181,7 @@ def language_selector() -> str:
     current_language = st.session_state["language"]
 
     current_label = next(
-        label
-        for label, code in LANGUAGE_OPTIONS.items()
-        if code == current_language
+        label for label, code in LANGUAGE_OPTIONS.items() if code == current_language
     )
 
     selected_label = st.sidebar.selectbox(
@@ -202,10 +199,8 @@ def language_selector() -> str:
 def t(key: str) -> str:
     language = st.session_state.get("language", "en")
 
-    return (
-        TRANSLATIONS
-        .get(language, TRANSLATIONS["en"])
-        .get(key, TRANSLATIONS["en"].get(key, key))
+    return TRANSLATIONS.get(language, TRANSLATIONS["en"]).get(
+        key, TRANSLATIONS["en"].get(key, key)
     )
 
 

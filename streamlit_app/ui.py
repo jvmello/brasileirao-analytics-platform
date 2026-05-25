@@ -4,7 +4,6 @@ from typing import Any
 
 import pandas as pd
 import streamlit as st
-
 from i18n import t, translate_columns
 
 
@@ -92,3 +91,101 @@ def metric_value(value: Any) -> str:
         return "-"
 
     return str(value)
+
+
+def prepare_standings_table(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+
+    standings_df = df.copy()
+
+    if "position" not in standings_df.columns:
+        standings_df.insert(0, "position", range(1, len(standings_df) + 1))
+
+    if (
+        "points" in standings_df.columns
+        and "matches_played" in standings_df.columns
+        and "performance" not in standings_df.columns
+    ):
+        standings_df["performance"] = (
+            standings_df["points"] / (standings_df["matches_played"] * 3) * 100
+        ).round(1)
+
+    column_order = [
+        "position",
+        "team_name",
+        "points",
+        "matches_played",
+        "wins",
+        "draws",
+        "losses",
+        "goals_for",
+        "goals_against",
+        "goal_difference",
+        "performance",
+    ]
+
+    existing_columns = [
+        column for column in column_order if column in standings_df.columns
+    ]
+
+    standings_df = standings_df[existing_columns]
+
+    language = st.session_state.get("language", "en")
+
+    if language == "pt":
+        standings_df = standings_df.rename(
+            columns={
+                "position": "#",
+                "team_name": "Clube",
+                "points": "Pontos",
+                "matches_played": "Jogos",
+                "wins": "Vitórias",
+                "draws": "Empates",
+                "losses": "Derrotas",
+                "goals_for": "Gols Marcados",
+                "goals_against": "Gols Sofridos",
+                "goal_difference": "Saldo de Gols",
+                "performance": "Aproveitamento (%)",
+            }
+        )
+    else:
+        standings_df = standings_df.rename(
+            columns={
+                "position": "#",
+                "team_name": "Club",
+                "points": "Points",
+                "matches_played": "Matches",
+                "wins": "Wins",
+                "draws": "Draws",
+                "losses": "Losses",
+                "goals_for": "Goals For",
+                "goals_against": "Goals Against",
+                "goal_difference": "Goal Difference",
+                "performance": "Performance (%)",
+            }
+        )
+
+    return standings_df
+
+
+# TODO Customize to each year
+def style_standings_table(df: pd.DataFrame):
+    def highlight_row(row):
+        position = row.get("#")
+
+        if position is None:
+            return [""] * len(row)
+
+        if position <= 4:
+            return ["background-color: #e8f5e9"] * len(row)
+
+        if position <= 6:
+            return ["background-color: #e3f2fd"] * len(row)
+
+        if position >= 17:
+            return ["background-color: #ffebee"] * len(row)
+
+        return [""] * len(row)
+
+    return df.style.apply(highlight_row, axis=1)

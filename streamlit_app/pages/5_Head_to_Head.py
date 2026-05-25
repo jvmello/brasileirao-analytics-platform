@@ -1,5 +1,4 @@
 import streamlit as st
-
 from api_client import ApiClientError, get_head_to_head, get_standings
 from i18n import language_selector, t
 from ui import (
@@ -11,7 +10,6 @@ from ui import (
     show_page_header,
 )
 
-
 st.set_page_config(
     page_title="Head-to-Head | Brasileirão Analytics",
     page_icon="⚔️",
@@ -22,9 +20,11 @@ language_selector()
 
 show_page_header(
     f"⚔️ {t('head_to_head')}",
-    "Compare historical matches between two teams."
-    if st.session_state["language"] == "en"
-    else "Compare o histórico de partidas entre dois times.",
+    (
+        "Compare historical matches between two teams."
+        if st.session_state["language"] == "en"
+        else "Compare o histórico de partidas entre dois times."
+    ),
 )
 
 with st.sidebar:

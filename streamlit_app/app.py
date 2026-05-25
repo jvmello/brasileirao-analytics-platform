@@ -1,8 +1,6 @@
 import streamlit as st
-
 from api_client import API_BASE_URL
 from i18n import language_selector, t
-
 
 st.set_page_config(
     page_title="Brasileirão Analytics",

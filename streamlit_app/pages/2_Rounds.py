@@ -1,9 +1,7 @@
 import streamlit as st
-
 from api_client import ApiClientError, get_round_matches
 from i18n import language_selector, t
 from ui import records_to_dataframe, show_api_error, show_dataframe, show_page_header
-
 
 st.set_page_config(
     page_title="Rounds | Brasileirão Analytics",
@@ -15,9 +13,11 @@ language_selector()
 
 show_page_header(
     f"📅 {t('rounds')}",
-    "Browse matches from a specific season and round."
-    if st.session_state["language"] == "en"
-    else "Navegue pelas partidas de uma temporada e rodada específica.",
+    (
+        "Browse matches from a specific season and round."
+        if st.session_state["language"] == "en"
+        else "Navegue pelas partidas de uma temporada e rodada específica."
+    ),
 )
 
 with st.sidebar:
@@ -68,7 +68,9 @@ try:
     ]
 
     existing_columns = [column for column in preferred_columns if column in df.columns]
-    remaining_columns = [column for column in df.columns if column not in existing_columns]
+    remaining_columns = [
+        column for column in df.columns if column not in existing_columns
+    ]
 
     show_dataframe(df[existing_columns + remaining_columns])
 

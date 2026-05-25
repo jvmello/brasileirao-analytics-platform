@@ -1,9 +1,12 @@
 import streamlit as st
-
 from api_client import ApiClientError, get_standings
 from i18n import language_selector, t
-from ui import records_to_dataframe, show_api_error, show_dataframe
-
+from ui import (
+    prepare_standings_table,
+    records_to_dataframe,
+    show_api_error,
+    show_page_header,
+)
 
 st.set_page_config(
     page_title="Standings | Brasileirão Analytics",
@@ -46,16 +49,47 @@ try:
         st.info(t("no_data"))
         st.stop()
 
-    cols = st.columns(4)
+    st.subheader(f"{t('season')} {season} - {t('round')} {round_number}")
+
+    metric_cols = st.columns(4)
 
     leader = df.iloc[0]
 
-    cols[0].metric(t("team"), len(df))
-    cols[1].metric("Leader" if st.session_state["language"] == "en" else "Líder", leader.get("team_name", "-"))
-    cols[2].metric(t("points"), leader.get("points", "-"))
-    cols[3].metric(t("wins"), leader.get("wins", "-"))
+    metric_cols[0].metric(t("team"), len(df))
+    metric_cols[1].metric(t("leader"), leader.get("team_name", "-"))
+    metric_cols[2].metric(t("points"), leader.get("points", "-"))
+    metric_cols[3].metric(t("wins"), leader.get("wins", "-"))
 
-    show_dataframe(df)
+    display_df = prepare_standings_table(df)
+
+    # styled_df = style_standings_table(display_df)
+
+    # st.dataframe(
+    #     styled_df,
+    #     use_container_width=True,
+    #     hide_index=True,
+    # )
+
+    st.dataframe(
+        display_df,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    if {"team_name", "points"}.issubset(df.columns):
+        st.subheader(t("points_by_team"))
+
+        chart_df = (
+            df[["team_name", "points"]]
+            .copy()
+            .sort_values("points", ascending=False)
+            .set_index("team_name")
+        )
+
+        st.bar_chart(chart_df)
+
+except ApiClientError as exc:
+    show_api_error(exc)
 
 except ApiClientError as exc:
     st.error(t("api_error"))

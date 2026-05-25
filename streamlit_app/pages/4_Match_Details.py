@@ -1,10 +1,8 @@
 import pandas as pd
 import streamlit as st
-
 from api_client import ApiClientError, get_match
 from i18n import language_selector, t
 from ui import records_to_dataframe, show_api_error, show_dataframe, show_page_header
-
 
 st.set_page_config(
     page_title="Match Details | Brasileirão Analytics",
@@ -16,9 +14,11 @@ language_selector()
 
 show_page_header(
     f"🔎 {t('match_details')}",
-    "Inspect match metadata, goals, cards and team statistics."
-    if st.session_state["language"] == "en"
-    else "Inspecione metadados da partida, gols, cartões e estatísticas dos times.",
+    (
+        "Inspect match metadata, goals, cards and team statistics."
+        if st.session_state["language"] == "en"
+        else "Inspecione metadados da partida, gols, cartões e estatísticas dos times."
+    ),
 )
 
 with st.sidebar:
@@ -51,8 +51,16 @@ try:
         home_team = teams.get("home", {}).get("name") or teams.get("home_team") or "-"
         away_team = teams.get("away", {}).get("name") or teams.get("away_team") or "-"
 
-        home_score = score.get("home") if score.get("home") is not None else score.get("home_score")
-        away_score = score.get("away") if score.get("away") is not None else score.get("away_score")
+        home_score = (
+            score.get("home")
+            if score.get("home") is not None
+            else score.get("home_score")
+        )
+        away_score = (
+            score.get("away")
+            if score.get("away") is not None
+            else score.get("away_score")
+        )
 
         st.markdown(f"## {home_team} {home_score} x {away_score} {away_team}")
 

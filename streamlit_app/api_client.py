@@ -6,7 +6,6 @@ from typing import Any
 import requests
 import streamlit as st
 
-
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 
 ENDPOINTS = {

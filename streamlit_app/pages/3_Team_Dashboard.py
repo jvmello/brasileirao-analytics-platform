@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-
 from api_client import ApiClientError, get_standings, get_team_dashboard
 from i18n import language_selector, t
 from ui import (
@@ -13,7 +12,6 @@ from ui import (
     show_page_header,
 )
 
-
 st.set_page_config(
     page_title="Team Dashboard | Brasileirão Analytics",
     page_icon="📊",
@@ -24,9 +22,11 @@ language_selector()
 
 show_page_header(
     f"📊 {t('team_dashboard')}",
-    "Season summary, home and away performance, recent matches, scorers and discipline."
-    if st.session_state["language"] == "en"
-    else "Resumo da temporada, desempenho como mandante e visitante, partidas recentes, artilheiros e disciplina.",
+    (
+        "Season summary, home and away performance, recent matches, scorers and discipline."
+        if st.session_state["language"] == "en"
+        else "Resumo da temporada, desempenho como mandante e visitante, partidas recentes, artilheiros e disciplina."
+    ),
 )
 
 with st.sidebar:
@@ -101,7 +101,9 @@ try:
     home_away_df = records_to_dataframe(home_away)
     show_dataframe(home_away_df)
 
-    if not home_away_df.empty and {"match_side", "points"}.issubset(home_away_df.columns):
+    if not home_away_df.empty and {"match_side", "points"}.issubset(
+        home_away_df.columns
+    ):
         chart_df = home_away_df[["match_side", "points"]].set_index("match_side")
         st.bar_chart(chart_df)
 
@@ -115,7 +117,9 @@ try:
     top_scorers_df = records_to_dataframe(top_scorers)
     show_dataframe(top_scorers_df)
 
-    if not top_scorers_df.empty and {"player_name", "goals"}.issubset(top_scorers_df.columns):
+    if not top_scorers_df.empty and {"player_name", "goals"}.issubset(
+        top_scorers_df.columns
+    ):
         chart_df = (
             top_scorers_df[["player_name", "goals"]]
             .sort_values("goals", ascending=False)
