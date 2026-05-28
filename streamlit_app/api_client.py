@@ -14,6 +14,7 @@ ENDPOINTS = {
     "matches": "/api/v1/matches",
     "head_to_head": "/api/v1/head-to-head",
     "team_dashboard": "/api/v1/seasons/{season}/teams/{team_id}/dashboard",
+    "team_season_stats": "/api/v1/seasons/{season}/stats/teams",
 }
 
 
@@ -88,3 +89,13 @@ def get_team_dashboard(season: int, team_id: int) -> Any:
     )
 
     return api_get(path)
+
+def get_team_season_stats(season: int, round_number: int | None = None):
+    path = ENDPOINTS["team_season_stats"].format(season=season)
+
+    params = {}
+
+    if round_number is not None:
+        params["round"] = round_number
+
+    return api_get(path, params=params)
