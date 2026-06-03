@@ -25,6 +25,33 @@ description = (
 
 show_page_header(title, description)
 
+@st.dialog("Metric details", width="large")
+def show_metric_details_dialog(
+    df: pd.DataFrame,
+    metric_key: str,
+    metric_title: str,
+) -> None:
+    st.subheader(metric_title)
+
+    metric_table = prepare_metric_table(df, metric_key)
+
+    show_dataframe(metric_table)
+
+    st.divider()
+
+    st.subheader("Chart" if language == "en" else "Gráfico")
+
+    chart_df = (
+        metric_table[["team_name", metric_key]]
+        .set_index("team_name")
+        .sort_values(metric_key, ascending=True)
+    )
+
+    st.bar_chart(chart_df)
+
+    if st.button("Close" if language == "en" else "Fechar"):
+        st.rerun()
+
 
 METRICS = {
     "goals_for": {
@@ -135,23 +162,42 @@ def get_metric_leader(df: pd.DataFrame, metric_key: str):
     ).iloc[0]
 
 
+def unique_columns(columns: list[str]) -> list[str]:
+    seen = set()
+    result = []
+
+    for column in columns:
+        if column not in seen:
+            result.append(column)
+            seen.add(column)
+
+    return result
+
+
 def prepare_metric_table(df: pd.DataFrame, metric_key: str) -> pd.DataFrame:
     metric = METRICS[metric_key]
 
-    table = df[
-        [
-            "team_name",
-            metric_key,
-            "matches_played",
-            "points",
-            "wins",
-            "draws",
-            "losses",
-            "goals_for",
-            "goals_against",
-            "goal_difference",
-        ]
-    ].copy()
+    base_columns = [
+        "team_name",
+        metric_key,
+        "matches_played",
+        "points",
+        "wins",
+        "draws",
+        "losses",
+        "goals_for",
+        "goals_against",
+        "goal_difference",
+    ]
+
+    columns = unique_columns(base_columns)
+
+    existing_columns = [
+        column for column in columns
+        if column in df.columns
+    ]
+
+    table = df[existing_columns].copy()
 
     table = table.sort_values(
         metric_key,
@@ -247,30 +293,11 @@ try:
                     key=f"btn_{metric_key}",
                     use_container_width=True,
                 ):
-                    st.session_state["selected_season_metric"] = metric_key
-
-    st.divider()
-
-    selected_metric = st.session_state["selected_season_metric"]
-
-    st.subheader(
-        f"{metric_label(selected_metric)} - "
-        + ("Full Table" if language == "en" else "Tabela Completa")
-    )
-
-    metric_table = prepare_metric_table(df, selected_metric)
-
-    show_dataframe(metric_table)
-
-    st.subheader("Chart" if language == "en" else "Gráfico")
-
-    chart_df = (
-        metric_table[["team_name", selected_metric]]
-        .set_index("team_name")
-        .sort_values(selected_metric, ascending=True)
-    )
-
-    st.bar_chart(chart_df)
+                    show_metric_details_dialog(
+                        df=df,
+                        metric_key=metric_key,
+                        metric_title=metric_label(metric_key),
+                    )
 
 except ApiClientError as exc:
     show_api_error(exc)
